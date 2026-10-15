@@ -93,11 +93,12 @@ export const createOrUpdateProfile = async (req, res, next) => {
     );
 
     const profileData = {
+      user: req.user.userId,
       userId: req.user.userId,
       title: title.trim(),
       location: location.trim(),
       bio: bio.trim(),
-      skills: JSON.stringify(normalizedSkills),
+      skills: normalizedSkills,
       education: education?.trim() || null,
       github: github?.trim() || null,
       portfolio: portfolio?.trim() || null,
@@ -120,7 +121,7 @@ export const createOrUpdateProfile = async (req, res, next) => {
     }
 
     // Create new profile
-    const profile = await Profile.create(profileData);
+    const profile = await Profile.createProfile(profileData);
 
     res.status(201).json({
       success: true,

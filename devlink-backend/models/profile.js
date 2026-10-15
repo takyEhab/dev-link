@@ -1,112 +1,157 @@
-const normalizeSkills = (value) => {
-  if (Array.isArray(value)) return value.slice(0, 10);
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.slice(0, 10) : [];
-  } catch (error) {
-    return [];
+import mongoose from "mongoose";
+
+const profileSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      unique: true,
+    },
+    title: {
+      type: String,
+      trim: true,
+      default: "Developer",
+    },
+    location: {
+      type: String,
+      trim: true,
+      default: "Remote",
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    bio: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    education: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    portfolio: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    github: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    linkedin: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    avatar: {
+      type: String,
+      default: null,
+    },
+  },
+  {
+    timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
   }
+);
+
+profileSchema.set("toJSON", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
+  },
+});
+
+profileSchema.set("toObject", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
+  },
+});
+
+const formatProfile = (doc, projectCount = 0) => {
+  if (!doc) return null;
+  const p = doc.toObject ? doc.toObject() : doc;
+  const user = p.user;
+  const userId = user?._id || user?.id || user;
+  return {
+    ...p,
+    id: p._id?.toString() || p.id,
+    user_id: userId?.toString(),
+    user: user && typeof user === "object"
+      ? {
+          id: (user._id || user.id || userId).toString(),
+          name: user.name,
+          email: user.email,
+        }
+      : { id: userId?.toString() },
+    skills: Array.isArray(p.skills) ? p.skills : [],
+    projectCount,
+  };
 };
 
-const Profile = {
-  async findAll() {
-    const { query } = await import("../database/mongodb.js");
-    const [rows] = await query(
-      `SELECT p.*, u.name, u.email,
-              (SELECT COUNT(*) FROM projects pr WHERE pr.user_id = p.user_id) AS project_count
-       FROM profiles p
-       JOIN users u ON u.id = p.user_id
-       ORDER BY p.created_at DESC`,
-    );
+profileSchema.statics.findAll = async function () {
+  const Project = mongoose.model("Project");
+  const profiles = await this.find().populate("user", "name email").sort({ created_at: -1 });
 
-    return rows.map((profile) => ({
-      ...profile,
-      skills: normalizeSkills(profile.skills),
-      user: { id: profile.user_id, name: profile.name, email: profile.email },
-      projectCount: Number(profile.project_count),
-    }));
-  },
-
-  async findOneByUserId(userId) {
-    const { query } = await import("../database/mongodb.js");
-    const [rows] = await query(
-      `SELECT p.*, u.name, u.email
-       FROM profiles p
-       JOIN users u ON u.id = p.user_id
-       WHERE p.user_id = ? LIMIT 1`,
-      [userId],
-    );
-
-    if (!rows[0]) return null;
-
-    const profile = rows[0];
-    return {
-      ...profile,
-      skills: normalizeSkills(profile.skills),
-      user: { id: profile.user_id, name: profile.name, email: profile.email },
-    };
-  },
-
-  async create(profileData) {
-    const { query } = await import("../database/mongodb.js");
-
-    const [result] = await query(
-      `INSERT INTO profiles (user_id, title, location, skills, bio, education, portfolio, github, linkedin, avatar)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        profileData.userId,
-        profileData.title || null,
-        profileData.location || null,
-        JSON.stringify(normalizeSkills(profileData.skills)),
-        profileData.bio || null,
-        profileData.education || null,
-        profileData.portfolio || null,
-        profileData.github || null,
-        profileData.linkedIn || null,
-        profileData.avatar || null,
-      ],
-    );
-
-    const [rows] = await query(
-      `SELECT p.*, u.name, u.email
-       FROM profiles p
-       JOIN users u ON u.id = p.user_id
-       WHERE p.id = ? LIMIT 1`,
-      [result.insertId],
-    );
-
-    const profile = rows[0];
-    return {
-      ...profile,
-      skills: normalizeSkills(profile.skills),
-      user: { id: profile.user_id, name: profile.name, email: profile.email },
-    };
-  },
-
-  async updateByUserId(userId, profileData) {
-    const { query } = await import("../database/mongodb.js");
-
-    await query(
-      `UPDATE profiles
-      SET title = ?, location = ?, skills = ?, bio = ?, education = ?, portfolio = ?, github = ?, linkedin = ?, avatar = COALESCE(?, avatar)
-       WHERE user_id = ?`,
-      [
-        profileData.title || null,
-        profileData.location || null,
-        JSON.stringify(normalizeSkills(profileData.skills)),
-        profileData.bio || null,
-        profileData.education || null,
-        profileData.portfolio || null,
-        profileData.github || null,
-        profileData.linkedIn || null,
-        profileData.avatar || null,
-        userId,
-      ],
-    );
-
-    return this.findOneByUserId(userId);
-  },
+  return Promise.all(
+    profiles.map(async (p) => {
+      const count = await Project.countDocuments({ user: p.user?._id || p.user });
+      return formatProfile(p, count);
+    })
+  );
 };
+
+profileSchema.statics.findOneByUserId = async function (userId) {
+  const profile = await this.findOne({ user: userId }).populate("user", "name email");
+  return formatProfile(profile);
+};
+
+profileSchema.statics.createProfile = async function (profileData) {
+  const doc = await this.create({
+    user: profileData.userId,
+    title: profileData.title,
+    location: profileData.location,
+    skills: profileData.skills,
+    bio: profileData.bio,
+    education: profileData.education,
+    portfolio: profileData.portfolio,
+    github: profileData.github,
+    linkedin: profileData.linkedin,
+    avatar: profileData.avatar,
+  });
+  return this.findOneByUserId(profileData.userId);
+};
+
+profileSchema.statics.updateByUserId = async function (userId, profileData) {
+  await this.findOneAndUpdate(
+    { user: userId },
+    {
+      $set: {
+        title: profileData.title,
+        location: profileData.location,
+        skills: profileData.skills,
+        bio: profileData.bio,
+        education: profileData.education,
+        portfolio: profileData.portfolio,
+        github: profileData.github,
+        linkedin: profileData.linkedin,
+        avatar: profileData.avatar,
+      },
+    },
+    { new: true }
+  );
+  return this.findOneByUserId(userId);
+};
+
+const Profile = mongoose.models.Profile || mongoose.model("Profile", profileSchema);
 
 export default Profile;

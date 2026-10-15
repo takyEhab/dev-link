@@ -103,12 +103,27 @@ const Header = () => {
     };
 
     loadNotifications();
-    const socket = io(SOCKET_URL, { withCredentials: true });
+    const token = localStorage.getItem("devlink_token");
+    const socket = io(SOCKET_URL, {
+      withCredentials: true,
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 10,
+    });
     socket.on("new_notification", (notification) => {
       setNotifications((current) => [notification, ...current].slice(0, 50));
     });
 
-    return () => socket.disconnect();
+    const pollInterval = setInterval(() => {
+      if (!socket.connected) {
+        loadNotifications();
+      }
+    }, 30000);
+
+    return () => {
+      clearInterval(pollInterval);
+      socket.disconnect();
+    };
   }, [user]);
 
   const notificationCount = notifications.filter(

@@ -429,6 +429,9 @@ const Signup = ({ onSwitchToLogin }) => {
           password: formData.password,
         });
         if (res.data.success) {
+          if (res.data.data?.token) {
+            localStorage.setItem("devlink_token", res.data.data.token);
+          }
           setRegisteredUser(res.data.data.user);
           toast.success(res.data.message);
         }

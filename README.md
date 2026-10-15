@@ -24,7 +24,7 @@ The project was built to practice and demonstrate real-world full-stack developm
 - 🔎 Developer discovery and search
 - 💬 Developer messaging
 - 🖼️ Profile and project images
-- 🔒 HTTP-only cookie authentication
+- 🔒 HTTP-only cookie authentication & Bearer token fallback
 - 📱 Responsive user interface
 - 🌐 RESTful backend API
 
@@ -44,14 +44,15 @@ The project was built to practice and demonstrate real-world full-stack developm
 
 - Node.js
 - Express.js
+- Mongoose / MongoDB
 - REST API
 - JWT Authentication
-- HTTP-only Cookies
+- HTTP-only Cookies & Bearer Tokens
 - CORS
 
 ### Database
 
-- MySQL
+- MongoDB Atlas (Cloud)
 
 ### Development & Deployment
 
@@ -62,8 +63,8 @@ The project was built to practice and demonstrate real-world full-stack developm
 
 ## Project Structure
 
-```
-DevLink/
+```text
+dev-link/
 │
 ├── devlink-frontend/
 │   ├── src/
@@ -92,196 +93,78 @@ DevLink/
 Make sure you have the following installed:
 
 - [Node.js](https://nodejs.org/)
-- MySQL
+- MongoDB Atlas account (or local MongoDB)
 - Git
 
 ### 1. Clone the repository
 
-```
-git clone https://github.com/takyEhab/DevLink.git
-cd DevLink
+```bash
+git clone https://github.com/takyEhab/dev-link.git
+cd dev-link
 ```
 
 ### 2. Setup the Backend
 
-```
+```bash
 cd devlink-backend
 npm install
 ```
 
-Create a `.env` file inside `devlink-backend`:
+Create a `.env` file inside `devlink-backend` (see `.env.example`):
 
-```
-PORT=5000
-
+```env
+PORT=3000
 FRONTEND_URL=http://localhost:5173
-
-DB_HOST=localhost
-DB_USER=your_username
-DB_PASSWORD=your_password
-DB_NAME=devlink
-
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/devlink?retryWrites=true&w=majority
 JWT_SECRET=your_jwt_secret
-```
-
-Start the backend:
-
-```
-npm run dev
-```
-
-The API will be available at:
-
-```
-http://localhost:5000
 ```
 
 ### 3. Setup the Frontend
 
 Open another terminal:
 
-```
+```bash
 cd devlink-frontend
 npm install
 ```
 
-Start the development server:
-
-```
-npm run dev
-```
-
-The frontend will normally be available at:
-
-```
-http://localhost:5173
-```
-
-## Environment Variables
-
-### Backend
-
-| Variable       | Description                     |
-| -------------- | ------------------------------- |
-| `PORT`         | Port used by the Express server |
-| `FRONTEND_URL` | URL allowed by CORS             |
-| `DB_HOST`      | MySQL host                      |
-| `DB_USER`      | MySQL username                  |
-| `DB_PASSWORD`  | MySQL password                  |
-| `DB_NAME`      | Database name                   |
-| `JWT_SECRET`   | Secret used for authentication  |
-
-> Never commit your `.env` file or expose your JWT secret or database credentials.
-
-## API Structure
-
-The backend follows a RESTful architecture.
-
-Main API resources include:
-
-```
-/api/auth
-/api/users
-/api/profile
-/api/projects
-/api/messages
-```
-
-The API is responsible for authentication, user management, profiles, projects, and communication between developers.
-
-## Authentication
-
-DevLink uses token-based authentication with JWT.
-
-Authentication tokens are stored using **HTTP-only cookies**, helping prevent client-side JavaScript from directly accessing authentication credentials.
-
-Protected API routes use authentication middleware to verify the current user before allowing access to protected resources.
-
 ## Development
 
-Run the frontend and backend separately during development.
+You can run both the frontend and backend together with a single command from the project root:
 
-### Frontend
-
-```
-cd devlink-frontend
+```bash
 npm run dev
 ```
 
-### Backend
+Or run them individually:
 
-```
-cd devlink-backend
-npm run dev
+### Frontend (Vite)
+```bash
+npm run dev:frontend
 ```
 
-Make sure your MySQL server is running before starting the backend.
+### Backend (Node.js & Express)
+```bash
+npm run dev:backend
+```
 
 ## Deployment
 
-The frontend and backend can be deployed as separate applications.
+The application is configured to deploy seamlessly to Vercel:
 
-Recommended structure:
-
-```
-DevLink
+```text
+dev-link
 │
-├── Frontend → Vercel
+├── Frontend (React SPA)  → Vercel
 │
-└── Backend → Vercel
+├── Backend (Express API) → Vercel Serverless
+│
+└── Database              → MongoDB Atlas (Free M0 Shared Tier)
 ```
 
-For production, update the backend environment variables with the production database credentials and frontend URL.
-
-Example:
-
-```
-FRONTEND_URL=https://your-production-frontend.vercel.app
-```
-
-## Screenshots
-
-Add screenshots of the main application here once the UI is finalized.
-
-```
-Home
-Profile
-Developer Search
-Project Details
-Messages
-Authentication
-```
-
-## Future Improvements
-
-Some features that can be added as the project evolves:
-
-- [ ] Real-time messaging
-- [ ] Notifications
-- [ ] Advanced developer filtering
-- [ ] Project categories
-- [ ] Developer following system
-- [ ] Profile verification
-- [ ] Improved image management
-- [ ] Better mobile experience
-- [ ] Automated testing
-- [ ] CI/CD pipeline
-
-## What I Learned
-
-Building DevLink provided practical experience with:
-
-- Designing and consuming REST APIs
-- Building a full-stack React application
-- Authentication and authorization
-- JWT and HTTP-only cookies
-- MySQL database design
-- Express.js backend architecture
-- CORS configuration
-- Frontend/backend communication
-- Environment variable management
-- Git and GitHub workflows
-- Application deployment
+1. **Frontend on Vercel**: Deploy the `devlink-frontend` directory. Add environment variable `VITE_API_URL` pointing to your deployed backend URL.
+2. **Backend on Vercel**: Deploy `devlink-backend` as a project. Add `MONGODB_URI` and `JWT_SECRET` under Vercel environment variables.
+3. **Resilient Chat Fallback**: On Vercel serverless environments where persistent WebSockets are not supported, the chat automatically uses HTTP REST calls and polling, ensuring messages send and receive smoothly.
 
 ## Author
 

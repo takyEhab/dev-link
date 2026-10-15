@@ -376,7 +376,7 @@ const DeveloperProfile = () => {
 
     try {
       setIsContacting(true);
-      const response = await api.post("/chats", { participantId: Number(id) });
+      const response = await api.post("/chats", { participantId: id });
       navigate("/messages", {
         state: { conversationId: response.data.data.conversation.id },
       });

@@ -13,6 +13,7 @@ export const UserProvider = ({ children }) => {
         const data = await checkAuth();
         setUser(data.user);
       } catch {
+        localStorage.removeItem("devlink_token");
         setUser(null);
       } finally {
         setLoading(false);
@@ -24,14 +25,16 @@ export const UserProvider = ({ children }) => {
   // Optional: login and logout helpers
   const apiLogin = async (email, password) => {
     const data = await login(email, password);
-    // const data = await checkAuth();
-    // console.log(data.data.user);
+    if (data.data?.token) {
+      localStorage.setItem("devlink_token", data.data.token);
+    }
     setUser(data.data.user);
     return data;
   };
 
   const apiLogout = async () => {
     await logout();
+    localStorage.removeItem("devlink_token");
     setUser(null);
   };
 

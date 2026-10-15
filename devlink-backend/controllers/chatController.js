@@ -1,7 +1,7 @@
 import Chat from "../models/chat.js";
 import Notification from "../models/notification.js";
 
-const getConversationId = (req) => Number(req.params.conversationId);
+const getConversationId = (req) => req.params.conversationId;
 
 export const getConversations = async (req, res, next) => {
   try {
@@ -14,8 +14,8 @@ export const getConversations = async (req, res, next) => {
 
 export const createConversation = async (req, res, next) => {
   try {
-    const participantId = Number(req.body.participantId);
-    if (!participantId || participantId === Number(req.user.userId)) {
+    const participantId = req.body.participantId;
+    if (!participantId || String(participantId) === String(req.user.userId)) {
       return res
         .status(400)
         .json({ error: "A valid other participant is required" });

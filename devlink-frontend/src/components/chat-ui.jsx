@@ -638,7 +638,14 @@ const ChatUI = ({ onBack }) => {
   useEffect(() => {
     if (!user) return undefined;
 
-    const socket = io(SOCKET_URL, { withCredentials: true });
+    const token = localStorage.getItem("devlink_token");
+    const socket = io(SOCKET_URL, {
+      withCredentials: true,
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 10,
+      timeout: 10000,
+    });
     socketRef.current = socket;
     socket.on("new_message", (message) => {
       setChats((currentChats) =>
@@ -665,12 +672,36 @@ const ChatUI = ({ onBack }) => {
       );
     });
 
-    socket.on("connect_error", () => toast.error("Chat connection failed"));
+    socket.on("connect_error", (err) => {
+      console.warn("Socket connect error (falling back to REST):", err.message);
+    });
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
   }, [user]);
+
+  // Polling fallback if Socket.IO is not connected (e.g. on serverless Vercel backend)
+  useEffect(() => {
+    if (!selectedChat?.id) return undefined;
+
+    const interval = setInterval(async () => {
+      if (!socketRef.current?.connected) {
+        try {
+          const response = await api.get(`/chats/${selectedChat.id}/messages`);
+          setSelectedChat((current) =>
+            current && current.id === selectedChat.id
+              ? { ...current, messages: response.data.data.messages }
+              : current,
+          );
+        } catch {
+          // silent fallback
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [selectedChat?.id]);
 
   const handleSelectChat = async (chat) => {
     try {
@@ -691,22 +722,55 @@ const ChatUI = ({ onBack }) => {
     setSelectedChat(null);
   };
 
-  const handleSendMessage = (content) => {
-    if (!selectedChat || !socketRef.current?.connected) {
-      toast.error("Chat is not connected");
+  const handleSendMessage = async (content) => {
+    if (!selectedChat) return;
+
+    // Use Socket.io if connected
+    if (socketRef.current?.connected) {
+      socketRef.current.emit(
+        "send_message",
+        {
+          conversationId: selectedChat.id,
+          content,
+        },
+        (response) => {
+          if (response?.error) toast.error(response.error);
+        },
+      );
       return;
     }
 
-    socketRef.current.emit(
-      "send_message",
-      {
-        conversationId: selectedChat.id,
+    // Graceful REST Fallback: sends immediately over HTTP when WebSockets are unavailable
+    try {
+      const response = await api.post(`/chats/${selectedChat.id}/messages`, {
         content,
-      },
-      (response) => {
-        if (response?.error) toast.error(response.error);
-      },
-    );
+      });
+      const message = response.data.data.message;
+      setChats((currentChats) =>
+        currentChats.map((chat) =>
+          chat.id === selectedChat.id
+            ? {
+                ...chat,
+                lastMessage: message.content,
+                timestamp: "Just now",
+                messages: [...chat.messages, message],
+              }
+            : chat,
+        ),
+      );
+      setSelectedChat((currentChat) =>
+        currentChat?.id === selectedChat.id
+          ? {
+              ...currentChat,
+              lastMessage: message.content,
+              timestamp: "Just now",
+              messages: [...currentChat.messages, message],
+            }
+          : currentChat,
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Unable to send message");
+    }
   };
 
   return (

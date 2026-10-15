@@ -49,12 +49,13 @@ export const register = async (req, res, next) => {
 
     res.cookie("token", token, cookieOptions);
 
-    const { password: _password, ...safeUser } = newUser;
+    const userObj = newUser.toObject ? newUser.toObject() : newUser;
+    const { password: _password, ...safeUser } = userObj;
 
     res.status(201).json({
       success: true,
       message: "Account created successfully",
-      data: { user: safeUser },
+      data: { user: safeUser, token },
     });
   } catch (error) {
     next(error);
@@ -91,12 +92,13 @@ export const login = async (req, res, next) => {
 
     res.cookie("token", token, cookieOptions);
 
-    const { password: _password, ...safeUser } = user;
+    const userObj = user.toObject ? user.toObject() : user;
+    const { password: _password, ...safeUser } = userObj;
 
     res.status(200).json({
       success: true,
       message: "User logged in successfully",
-      data: { user: safeUser },
+      data: { user: safeUser, token },
     });
   } catch (error) {
     next(error);

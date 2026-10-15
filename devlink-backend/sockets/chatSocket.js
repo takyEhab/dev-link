@@ -20,7 +20,11 @@ export default function registerChatSocket(io) {
   io.use((socket, next) => {
     try {
       const cookies = parseCookies(socket.handshake.headers.cookie);
-      const token = cookies.token;
+      const token =
+        socket.handshake.auth?.token ||
+        socket.handshake.query?.token ||
+        cookies.token;
+
       if (!token) return next(new Error("Authentication required"));
 
       socket.user = jwt.verify(token, process.env.JWT_SECRET);
@@ -37,7 +41,7 @@ export default function registerChatSocket(io) {
       "join_conversation",
       async (conversationId, callback = () => {}) => {
         const conversation = await Chat.findConversationForUser(
-          Number(conversationId),
+          conversationId,
           socket.user.userId,
         );
         if (!conversation) return callback({ error: "Conversation not found" });
@@ -52,7 +56,7 @@ export default function registerChatSocket(io) {
       async ({ conversationId, content }, callback = () => {}) => {
         try {
           const conversation = await Chat.findConversationForUser(
-            Number(conversationId),
+            conversationId,
             socket.user.userId,
           );
           const cleanContent =
@@ -94,7 +98,7 @@ export default function registerChatSocket(io) {
 
     socket.on("mark_read", async (conversationId) => {
       const conversation = await Chat.findConversationForUser(
-        Number(conversationId),
+        conversationId,
         socket.user.userId,
       );
       if (conversation)

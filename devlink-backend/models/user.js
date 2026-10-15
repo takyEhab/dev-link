@@ -1,45 +1,60 @@
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+import mongoose from "mongoose";
 
-const User = {
-  async findOneByEmail(email) {
-    const { query } = await import("../database/mongodb.js");
-    const [rows] = await query("SELECT * FROM users WHERE email = ? LIMIT 1", [
-      email,
-    ]);
-    return rows[0] || null;
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Name is required"],
+      trim: true,
+      minlength: 2,
+    },
+    email: {
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Please enter a valid email address"],
+    },
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+      minlength: 6,
+    },
+    role: {
+      type: String,
+      default: "user",
+    },
   },
+  {
+    timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
+  }
+);
 
-  async findById(id) {
-    const { query } = await import("../database/mongodb.js");
-    const [rows] = await query(
-      "SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
-      [id],
-    );
-    return rows[0] || null;
+userSchema.set("toJSON", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
   },
+});
 
-  async create({ name, email, password, role = "user" }) {
-    const { query } = await import("../database/mongodb.js");
-
-    if (!name || !email || !password) {
-      throw new Error("Name, email and password are required");
-    }
-    if (!validateEmail(email)) {
-      throw new Error("Please enter a valid email address");
-    }
-
-    const [result] = await query(
-      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-      [name, email, password, role],
-    );
-
-    const [rows] = await query(
-      "SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
-      [result.insertId],
-    );
-
-    return rows[0];
+userSchema.set("toObject", {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
   },
+});
+
+userSchema.statics.findOneByEmail = function (email) {
+  return this.findOne({ email: email.toLowerCase() });
 };
+
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;

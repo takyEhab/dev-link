@@ -1,8 +1,14 @@
 {
-  "name": "devlink",
+  "name": "dev-link",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix devlink-backend\" \"npm run dev --prefix devlink-frontend\""
+    "dev": "concurrently -k -p \"[{name}]\" -n \"backend,frontend\" -c \"yellow.bold,cyan.bold\" \"npm run dev --prefix devlink-backend\" \"npm run dev --prefix devlink-frontend\"",
+    "dev:backend": "npm run dev --prefix devlink-backend",
+    "dev:frontend": "npm run dev --prefix devlink-frontend",
+    "build": "npm run build --prefix devlink-frontend",
+    "build:frontend": "npm run build --prefix devlink-frontend",
+    "start:backend": "npm run start --prefix devlink-backend",
+    "start:frontend": "npm run preview --prefix devlink-frontend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
