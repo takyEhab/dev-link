@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import { createServer } from "http";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -77,20 +78,28 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Ensure database is connected before handling any requests
-let dbPromise = null;
+// Health check route - responds immediately without waiting for DB
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "DevLink API is online",
+    database: mongoose.connection?.readyState === 1 ? "connected" : "connecting/idle",
+  });
+});
+
+// Ensure database is connected before handling data requests
 app.use(async (req, res, next) => {
   try {
-    if (!dbPromise) {
-      dbPromise = connectToDatabase().catch((err) => {
-        dbPromise = null;
-        throw err;
-      });
-    }
-    await dbPromise;
+    await connectToDatabase();
     next();
   } catch (err) {
-    next(err);
+    console.error("Database connection error in request:", err.message);
+    return res.status(500).json({
+      success: false,
+      error: "Database connection failed",
+      message: err.message,
+      help: "Ensure MONGODB_URI is correctly configured in your Vercel Environment Variables.",
+    });
   }
 });
 
@@ -99,10 +108,6 @@ app.use("/profile", profileRouter);
 app.use("/projects", projectRouter);
 app.use("/chats", chatRouter);
 app.use("/notifications", notificationRouter);
-
-app.get("/", async (req, res) => {
-  res.status(200).json({ message: "api root" });
-});
 
 app.get("/admin", authorizeAdmin, (req, res) => {
   res.send("Welcome, admin!");

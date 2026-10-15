@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 import dns from "dns";
 
-// Fix for Windows / ISP DNS refusing SRV queries (ECONNREFUSED)
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch {
-  // Silent fallback in environments where setServers is restricted
+// Fix for Windows / ISP DNS refusing SRV queries (ECONNREFUSED on local dev)
+if (process.platform === "win32") {
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  } catch {
+    // Silent fallback
+  }
 }
 
 let cachedConnection = null;
