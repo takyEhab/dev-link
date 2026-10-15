@@ -159,7 +159,7 @@ const Header = () => {
   const handleProfileClick = () => {
     setUserMenuOpen(false);
 
-    navigate(`/developer/${user.id}`);
+    navigate(`/developer/${user?.id || user?._id}`);
   };
 
   const handleLogoutClick = async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import {
   Search,
   Filter,
@@ -32,8 +32,10 @@ import {
   Briefcase,
   UserRound,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import api from "../services/api";
+import { UserContext } from "../context/UserContext";
 
 // Enhanced UI components with custom styling
 const Button = ({
@@ -381,6 +383,7 @@ const hourlyRateRanges = ["All", "$0-50", "$50-100", "$100-150", "$150+"];
 const TalentDiscovery = () => {
   const [talentProfiles, setTalentProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [contactingId, setContactingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedExperience, setSelectedExperience] = useState("All");
@@ -388,6 +391,38 @@ const TalentDiscovery = () => {
   const [selectedRateRange, setSelectedRateRange] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("rating");
+
+  const { user } = useContext(UserContext);
+  const navigate = useNavigate();
+
+  const handleContactDeveloper = async (talentId) => {
+    if (!user) {
+      toast.error("Please sign in to send messages.");
+      navigate("/auth");
+      return;
+    }
+
+    const currentUserId = user?.id || user?._id;
+    if (String(currentUserId) === String(talentId)) {
+      toast.info("You cannot message yourself.");
+      return;
+    }
+
+    try {
+      setContactingId(talentId);
+      const response = await api.post("/chats", { participantId: talentId });
+      const conversationId = response.data?.data?.conversation?.id;
+      navigate("/messages", {
+        state: { conversationId },
+      });
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || "Unable to open this conversation.",
+      );
+    } finally {
+      setContactingId(null);
+    }
+  };
 
   useEffect(() => {
     const loadProfiles = async () => {
@@ -414,6 +449,9 @@ const TalentDiscovery = () => {
           premium: false,
           recentProjects: [],
           bio: profile.bio || "This developer has not added a bio yet.",
+          github: profile.github || null,
+          linkedin: profile.linkedin || null,
+          email: profile.user?.email || null,
         }));
         setTalentProfiles(profiles);
       } catch (error) {
@@ -884,10 +922,21 @@ const TalentDiscovery = () => {
                     {/* Enhanced Action Buttons */}
                     <div className="flex items-center justify-between">
                       <div className="flex gap-3">
-                        <Button variant="outline" size="sm">
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Message
-                        </Button>
+                        {(!user ||
+                          String(talent.id) !==
+                            String(user?.id || user?._id)) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={contactingId === talent.id}
+                            onClick={() => handleContactDeveloper(talent.id)}
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            {contactingId === talent.id
+                              ? "Opening..."
+                              : "Message"}
+                          </Button>
+                        )}
                         <Link to={`/developer/${talent.id}`}>
                           <Button variant="outline" size="sm">
                             <Eye className="w-4 h-4 mr-2" />
@@ -897,27 +946,66 @@ const TalentDiscovery = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10"
-                        >
-                          <Github className="w-5 h-5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10"
-                        >
-                          <Linkedin className="w-5 h-5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-10 w-10"
-                        >
-                          <Mail className="w-5 h-5" />
-                        </Button>
+                        {talent.github ? (
+                          <a
+                            href={
+                              talent.github.startsWith("http")
+                                ? talent.github
+                                : `https://${talent.github}`
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 transition-colors"
+                          >
+                            <Github className="w-5 h-5" />
+                          </a>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-slate-500 pointer-events-none"
+                          >
+                            <Github className="w-5 h-5" />
+                          </Button>
+                        )}
+                        {talent.linkedin ? (
+                          <a
+                            href={
+                              talent.linkedin.startsWith("http")
+                                ? talent.linkedin
+                                : `https://${talent.linkedin}`
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 transition-colors"
+                          >
+                            <Linkedin className="w-5 h-5" />
+                          </a>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-slate-500 pointer-events-none"
+                          >
+                            <Linkedin className="w-5 h-5" />
+                          </Button>
+                        )}
+                        {talent.email ? (
+                          <a
+                            href={`mailto:${talent.email}`}
+                            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-emerald-500/10 text-slate-400 hover:text-emerald-400 transition-colors"
+                          >
+                            <Mail className="w-5 h-5" />
+                          </a>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-10 w-10 text-slate-500 pointer-events-none"
+                          >
+                            <Mail className="w-5 h-5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

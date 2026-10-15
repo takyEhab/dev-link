@@ -230,7 +230,7 @@ const DeveloperProfile = () => {
   const [isAddProject, setIsAddProject] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user } = useContext(UserContext);
+  const { user, loading: authLoading } = useContext(UserContext);
   const [editForm, setEditForm] = useState({});
   const [addForm, setAddForm] = useState({
     title: "Full stack",
@@ -251,7 +251,18 @@ const DeveloperProfile = () => {
     linkedIn: "",
     portfolio: "",
   });
-  const isOwnProfile = String(user?.id) === id;
+  const currentUserId = user?.id || user?._id;
+  const isOwnProfile = Boolean(
+    currentUserId &&
+      (String(currentUserId) === String(id) ||
+        String(currentUserId) === String(myDeveloper?.user_id) ||
+        String(currentUserId) === String(myDeveloper?.user?.id) ||
+        String(currentUserId) === String(myDeveloper?.user?._id) ||
+        (myDeveloper?.id &&
+          String(myDeveloper.id) === String(id) &&
+          String(myDeveloper?.user_id || myDeveloper?.user?.id) ===
+            String(currentUserId)))
+  );
   const navigate = useNavigate();
 
   // Get current user from context
@@ -374,11 +385,22 @@ const DeveloperProfile = () => {
       return;
     }
 
+    if (isOwnProfile) {
+      toast.info("You cannot message yourself.");
+      return;
+    }
+
+    const targetUserId =
+      myDeveloper?.user?.id ||
+      myDeveloper?.user?._id ||
+      myDeveloper?.user_id ||
+      id;
+
     try {
       setIsContacting(true);
-      const response = await api.post("/chats", { participantId: id });
+      const response = await api.post("/chats", { participantId: targetUserId });
       navigate("/messages", {
-        state: { conversationId: response.data.data.conversation.id },
+        state: { conversationId: response.data?.data?.conversation?.id },
       });
     } catch (error) {
       toast.error(
@@ -425,7 +447,7 @@ const DeveloperProfile = () => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return <Loading />;
   }
   if (!myDeveloper) {
