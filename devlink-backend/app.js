@@ -28,6 +28,7 @@ const defaultOrigins = [
   "http://localhost:4173",
   "http://127.0.0.1:5173",
   "https://dev-link-frontend-mu.vercel.app",
+  "https://devlink-platform.vercel.app",
 ];
 
 const envOrigins = process.env.FRONTEND_URL
