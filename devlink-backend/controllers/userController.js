@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import Profile from "../models/profile.js";
 
 const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
 const isProduction = process.env.NODE_ENV === "production";
@@ -10,6 +11,29 @@ const cookieOptions = {
   secure: process.env.COOKIE_SECURE === "true" || isProduction,
   sameSite: process.env.COOKIE_SAME_SITE || (isProduction ? "none" : "lax"),
   maxAge: 1000 * 60 * 60 * 24 * 7,
+};
+
+const enrichUserWithProfile = async (user) => {
+  if (!user) return user;
+  const userObj = user.toObject ? user.toObject() : { ...user };
+  const { password: _password, __v, ...safeUser } = userObj;
+
+  try {
+    const profile = await Profile.findOne({ user: user._id || user.id });
+    if (profile) {
+      safeUser.avatar = profile.avatar || null;
+      safeUser.title = profile.title || null;
+      safeUser.location = profile.location || null;
+      safeUser.bio = profile.bio || null;
+    } else {
+      safeUser.avatar = null;
+      safeUser.title = null;
+    }
+  } catch (err) {
+    console.error("Error attaching profile to user:", err);
+  }
+
+  return safeUser;
 };
 
 export const register = async (req, res, next) => {
@@ -49,8 +73,7 @@ export const register = async (req, res, next) => {
 
     res.cookie("token", token, cookieOptions);
 
-    const userObj = newUser.toObject ? newUser.toObject() : newUser;
-    const { password: _password, ...safeUser } = userObj;
+    const safeUser = await enrichUserWithProfile(newUser);
 
     res.status(201).json({
       success: true,
@@ -92,8 +115,7 @@ export const login = async (req, res, next) => {
 
     res.cookie("token", token, cookieOptions);
 
-    const userObj = user.toObject ? user.toObject() : user;
-    const { password: _password, ...safeUser } = userObj;
+    const safeUser = await enrichUserWithProfile(user);
 
     res.status(200).json({
       success: true,
@@ -112,7 +134,9 @@ export const getCurrentUser = async (req, res, next) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ isAuthenticated: true, user });
+    const safeUser = await enrichUserWithProfile(user);
+
+    res.status(200).json({ isAuthenticated: true, user: safeUser });
   } catch (error) {
     next(error);
   }

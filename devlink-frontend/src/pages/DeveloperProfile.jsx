@@ -233,7 +233,7 @@ const DeveloperProfile = () => {
   const [isAddProject, setIsAddProject] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user, loading: authLoading } = useContext(UserContext);
+  const { user, setUser, loading: authLoading } = useContext(UserContext);
   const [editForm, setEditForm] = useState({});
   const [addForm, setAddForm] = useState({
     title: "",
@@ -341,6 +341,16 @@ const DeveloperProfile = () => {
       const res = await api.post("/profile/", editForm);
       toast.success("Profile updated!");
 
+      const updatedProfile = res.data?.data?.profile;
+      if (updatedProfile && isOwnProfile && setUser) {
+        setUser((prev) => ({
+          ...prev,
+          name: updatedProfile.user?.name || editForm.name || prev?.name,
+          avatar: updatedProfile.avatar || prev?.avatar,
+          title: updatedProfile.title || prev?.title,
+        }));
+      }
+
       await fetchDeveloper();
       setIsEditMode(false);
     } catch (error) {
@@ -374,7 +384,15 @@ const DeveloperProfile = () => {
         skills,
       });
 
-      setMyDeveloper(res.data.data.profile);
+      const createdProfile = res.data?.data?.profile;
+      setMyDeveloper(createdProfile);
+      if (createdProfile && setUser) {
+        setUser((prev) => ({
+          ...prev,
+          avatar: createdProfile.avatar || prev?.avatar,
+          title: createdProfile.title || prev?.title,
+        }));
+      }
       toast.success("Your developer profile was created.");
     } catch (error) {
       toast.error(
