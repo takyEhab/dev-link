@@ -35,6 +35,7 @@ import { toast } from "react-toastify";
 import Loading from "../components/Loading";
 import DeveloperNotFound from "./DeveloperNotFound";
 import api from "../services/api";
+import { ProjectImage, AvatarImage } from "../components/SafeImage";
 
 // Enhanced UI components with custom styling
 const Button = ({
@@ -516,17 +517,13 @@ const DeveloperProfile = () => {
             {/* Avatar Photo for Setup */}
             <div className="mb-6 p-4 bg-slate-700/50 rounded-xl border border-slate-600/70 flex flex-col sm:flex-row items-center gap-5">
               <div className="relative shrink-0">
-                {setupForm.avatar ? (
-                  <img
-                    src={setupForm.avatar}
-                    alt="Avatar preview"
-                    className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center">
-                    <UserRound className="w-9 h-9 text-emerald-300/70" />
-                  </div>
-                )}
+                <AvatarImage
+                  src={setupForm.avatar}
+                  alt="Avatar preview"
+                  className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg"
+                  fallbackClassName="w-20 h-20 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center"
+                  iconClassName="w-9 h-9 text-emerald-300/70"
+                />
               </div>
 
               <div className="flex-1 w-full space-y-2">
@@ -705,6 +702,7 @@ const DeveloperProfile = () => {
             alt="Cover"
             className="w-full h-full object-cover"
             onError={(e) => {
+              e.target.onerror = null;
               e.target.src =
                 "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200&h=400&fit=crop";
             }}
@@ -717,17 +715,13 @@ const DeveloperProfile = () => {
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* Avatar */}
             <div className="relative group/avatar">
-              {developer.avatar ? (
-                <img
-                  src={developer.avatar}
-                  alt={developer.name}
-                  className="w-28 h-28 md:w-32 md:h-32 rounded-2xl object-cover border-4 border-slate-800 shadow-xl"
-                />
-              ) : (
-                <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl border-4 border-slate-800 bg-emerald-500/10 flex items-center justify-center shadow-xl">
-                  <UserRound className="w-12 h-12 text-emerald-300/70" />
-                </div>
-              )}
+              <AvatarImage
+                src={developer.avatar}
+                alt={developer.name}
+                className="w-28 h-28 md:w-32 md:h-32 rounded-2xl object-cover border-4 border-slate-800 shadow-xl"
+                fallbackClassName="w-28 h-28 md:w-32 md:h-32 rounded-2xl border-4 border-slate-800 bg-emerald-500/10 flex items-center justify-center shadow-xl"
+                iconClassName="w-12 h-12 text-emerald-300/70"
+              />
               {isOwnProfile && (
                 <button
                   type="button"
@@ -1000,20 +994,14 @@ const DeveloperProfile = () => {
                     developer.recentProjects.map((project) => (
                       <Card key={project.id || project._id} className="p-6">
                         <div className="flex flex-col lg:flex-row gap-6">
-                          {project.image ? (
-                            <img
-                              src={project.image}
-                              alt={project.title}
-                              className="w-full lg:w-56 h-36 object-cover rounded-xl border border-slate-700 bg-slate-800"
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full lg:w-56 h-36 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                              <Code className="w-10 h-10 text-emerald-400/50" />
-                            </div>
-                          )}
+                          <ProjectImage
+                            src={project.image}
+                            alt={project.title}
+                            className="w-full lg:w-56 h-36 object-cover rounded-xl border border-slate-700 bg-slate-800"
+                            fallbackClassName="w-full lg:w-56 h-36 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center"
+                            iconClassName="w-10 h-10 text-emerald-400/50"
+                            icon={Code}
+                          />
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-3">
                               <h3 className="text-xl font-semibold text-white">
@@ -1099,17 +1087,13 @@ const DeveloperProfile = () => {
               {/* Profile Photo / Avatar */}
               <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/70 flex flex-col sm:flex-row items-center gap-5">
                 <div className="relative shrink-0">
-                  {editForm.avatar ? (
-                    <img
-                      src={editForm.avatar}
-                      alt="Avatar preview"
-                      className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center">
-                      <UserRound className="w-9 h-9 text-emerald-300/70" />
-                    </div>
-                  )}
+                  <AvatarImage
+                    src={editForm.avatar}
+                    alt="Avatar preview"
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg"
+                    fallbackClassName="w-20 h-20 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center"
+                    iconClassName="w-9 h-9 text-emerald-300/70"
+                  />
                 </div>
 
                 <div className="flex-1 w-full space-y-2">
@@ -1533,7 +1517,7 @@ const DeveloperProfile = () => {
                 {/* Preview the image */}
                 {(addForm.file || addForm.imageUrl) && (
                   <div className="mt-3">
-                    <img
+                    <ProjectImage
                       src={
                         addForm.file
                           ? URL.createObjectURL(addForm.file)
@@ -1541,9 +1525,9 @@ const DeveloperProfile = () => {
                       }
                       alt="Preview"
                       className="w-56 h-36 object-cover rounded-xl border border-slate-600 shadow-md bg-slate-800"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
+                      fallbackClassName="w-56 h-36 rounded-xl border border-slate-600 bg-slate-800 flex items-center justify-center shadow-md"
+                      iconClassName="w-10 h-10 text-emerald-400/50"
+                      icon={Code}
                     />
                   </div>
                 )}

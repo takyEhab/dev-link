@@ -11,6 +11,7 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
+import { ProjectImage } from "../components/SafeImage";
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -68,15 +69,14 @@ const ProjectDetails = () => {
         <section className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
           <div>
             <div className="h-72 md:h-96 rounded-2xl overflow-hidden border border-slate-700 bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 flex items-center justify-center">
-              {project.image ? (
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Code2 className="w-24 h-24 text-emerald-400/50" />
-              )}
+              <ProjectImage
+                src={project.image}
+                alt={project.title}
+                className="w-full h-full object-cover"
+                fallbackClassName="w-full h-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 flex items-center justify-center"
+                iconClassName="w-24 h-24 text-emerald-400/50"
+                icon={Code2}
+              />
             </div>
             <div className="mt-8 flex flex-wrap gap-2">
               {project.technologies.map((technology) => (

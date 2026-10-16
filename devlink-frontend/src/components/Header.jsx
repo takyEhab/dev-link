@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { UserContext } from "../context/UserContext";
 import api, { SOCKET_URL } from "../services/api";
+import { AvatarImage } from "./SafeImage";
 
 // Simple UI Components
 const Button = ({
@@ -277,15 +278,13 @@ const Header = () => {
                   onToggle={handleUserMenuToggle}
                   trigger={
                     <div className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-700/50 transition-colors">
-                      {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-8 h-8 rounded-full border-2 border-gray-600"
-                        />
-                      ) : (
-                        <UserRound className="w-5 h-5 text-emerald-300/70" />
-                      )}
+                      <AvatarImage
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full border-2 border-gray-600 object-cover"
+                        fallbackClassName="w-8 h-8 rounded-full border-2 border-gray-600 bg-emerald-500/10 flex items-center justify-center"
+                        iconClassName="w-4 h-4 text-emerald-300/70"
+                      />
 
                       <div className="hidden sm:block text-left">
                         <div className="text-sm font-medium text-white">

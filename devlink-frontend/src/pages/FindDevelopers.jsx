@@ -37,6 +37,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../services/api";
 import { UserContext } from "../context/UserContext";
+import { ProjectImage, AvatarImage } from "../components/SafeImage";
 
 // Enhanced UI components with custom styling
 const Button = ({
@@ -769,17 +770,13 @@ const TalentDiscovery = () => {
                     {/* Enhanced Talent Header */}
                     <div className="flex items-start gap-6 mb-8">
                       <div className="relative">
-                        {talent.avatar ? (
-                          <img
-                            src={talent.avatar}
-                            alt={talent.name}
-                            className="w-24 h-24 rounded-2xl border-2 border-slate-600 group-hover:border-emerald-500/50 transition-all duration-500 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="w-24 h-24 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center">
-                            <UserRound className="w-10 h-10 text-emerald-300/70" />
-                          </div>
-                        )}
+                        <AvatarImage
+                          src={talent.avatar}
+                          alt={talent.name}
+                          className="w-24 h-24 rounded-2xl border-2 border-slate-600 group-hover:border-emerald-500/50 transition-all duration-500 group-hover:scale-110 object-cover"
+                          fallbackClassName="w-24 h-24 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center"
+                          iconClassName="w-10 h-10 text-emerald-300/70"
+                        />
                         {talent.verified && (
                           <div className="absolute -bottom-2 -right-2">
                             <CheckCircle className="w-6 h-6 text-emerald-400 bg-slate-900 rounded-full p-1" />
@@ -932,17 +929,14 @@ const TalentDiscovery = () => {
                             key={idx}
                             className="relative overflow-hidden rounded-xl group/project"
                           >
-                            {project.image ? (
-                              <img
-                                src={project.image}
-                                alt={project.title}
-                                className="w-full h-20 object-cover group-hover/project:scale-110 transition-transform duration-500"
-                              />
-                            ) : (
-                              <div className="w-full h-20 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                                <Code className="w-8 h-8 text-emerald-300/60" />
-                              </div>
-                            )}
+                            <ProjectImage
+                              src={project.image}
+                              alt={project.title}
+                              className="w-full h-20 object-cover group-hover/project:scale-110 transition-transform duration-500"
+                              fallbackClassName="w-full h-20 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20"
+                              iconClassName="w-8 h-8 text-emerald-300/60"
+                              icon={Code}
+                            />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent opacity-0 group-hover/project:opacity-100 transition-opacity duration-300"></div>
                             <div className="absolute bottom-2 left-3 text-white text-xs font-semibold">
                               {project.title}

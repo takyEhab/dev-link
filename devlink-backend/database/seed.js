@@ -250,7 +250,7 @@ const seedData = [
         githubLink: "https://github.com/aminahassan/documind",
         liveDemo: "https://documind.ai",
         image:
-          "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&h=500&fit=crop",
+          "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=500&fit=crop",
       },
       {
         title: "MarketPulse Sentiment Engine",

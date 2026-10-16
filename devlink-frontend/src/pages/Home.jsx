@@ -28,6 +28,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { toast } from "react-toastify";
+import { ProjectImage } from "../components/SafeImage";
 
 // Custom UI components for Home page
 const Button = ({
@@ -450,17 +451,13 @@ const Home = () => {
                   <div className="flex gap-8 p-8">
                     {/* Enhanced Project Image */}
                     <div className="flex-shrink-0 relative">
-                      {project.image ? (
-                        <img
-                          src={project.image}
-                          alt={project.title}
-                          className="w-48 h-32 object-cover rounded-2xl border border-zinc-600/50 group-hover:border-indigo-500/50 transition-all duration-500 group-hover:scale-110"
-                        />
-                      ) : (
-                        <div className="w-48 h-32 rounded-2xl border border-zinc-600/50 bg-gradient-to-br from-indigo-500/20 to-pink-500/20 flex items-center justify-center">
-                          <ImageIcon className="w-10 h-10 text-indigo-300/70" />
-                        </div>
-                      )}
+                      <ProjectImage
+                        src={project.image}
+                        alt={project.title}
+                        className="w-48 h-32 object-cover rounded-2xl border border-zinc-600/50 group-hover:border-indigo-500/50 transition-all duration-500 group-hover:scale-110"
+                        fallbackClassName="w-48 h-32 rounded-2xl border border-zinc-600/50 bg-gradient-to-br from-indigo-500/20 to-pink-500/20 flex items-center justify-center"
+                        iconClassName="w-10 h-10 text-indigo-300/70"
+                      />
                       {project.featured && (
                         <div className="absolute -top-3 -left-3">
                           <Badge variant="warning" className="text-xs">
