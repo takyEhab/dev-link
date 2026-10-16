@@ -3,6 +3,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Layout from "./Layout";
 import Home from "./pages/Home";
 import { UserProvider } from "./context/UserProvider";
+import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import Auth from "./pages/Auth";
 import FindDevelopers from "./pages/FindDevelopers";

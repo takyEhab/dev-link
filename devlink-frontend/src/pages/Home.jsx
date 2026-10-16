@@ -80,7 +80,7 @@ const Home = () => {
 
   const handleShareProject = async (event, project) => {
     event.stopPropagation();
-    const projectUrl = `${window.location.origin}/project/${project.id}`;
+    const projectUrl = `${window.location.origin}/project/${project.id || project._id}`;
 
     try {
       await navigator.clipboard.writeText(projectUrl);
@@ -234,12 +234,12 @@ const Home = () => {
             <div className="space-y-6">
               {filteredProjects.map((project) => (
                 <div
-                  key={project.id}
-                  onClick={() => navigate(`/project/${project.id}`)}
+                  key={project.id || project._id}
+                  onClick={() => navigate(`/project/${project.id || project._id}`)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      navigate(`/project/${project.id}`);
+                      navigate(`/project/${project.id || project._id}`);
                     }
                   }}
                   role="button"

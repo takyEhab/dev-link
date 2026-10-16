@@ -100,20 +100,25 @@ const normalizeTechnologies = (val) => {
 };
 
 projectSchema.statics.findByIdWithAuthor = async function (projectId) {
+  if (!projectId || !mongoose.Types.ObjectId.isValid(projectId)) {
+    return null;
+  }
   const Profile = mongoose.model("Profile");
-  const project = await this.findById(projectId).populate("user", "name email");
+  const project = await this.findOne({ _id: projectId }).populate("user", "name email");
   if (!project) return null;
 
   const user = project.user;
-  const profile = user ? await Profile.findOne({ user: user._id }) : null;
+  const profile = user ? await Profile.findOne({ user: user._id || user }) : null;
 
   const obj = project.toObject();
+  const authorId = (user?._id || user || "").toString();
   return {
     ...obj,
-    id: obj.id,
+    id: obj._id?.toString() || obj.id,
     author: {
-      id: user?._id?.toString(),
-      name: user?.name,
+      id: authorId,
+      _id: authorId,
+      name: user?.name || "Developer",
       title: profile?.title || "Developer",
       location: profile?.location || "Remote",
     },
@@ -166,7 +171,7 @@ const Project = mongoose.models.Project || mongoose.model("Project", projectSche
 
 // Backwards-compatible aliases for controllers
 Project.findAll = Project.findAllWithAuthor;
-Project.findById = Project.findByIdWithAuthor;
+Project.findByIdWithAuthor = Project.findByIdWithAuthor;
 Project.create = Project.createProject;
 
 export default Project;

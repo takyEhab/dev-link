@@ -30,10 +30,20 @@ import Loading from "../components/Loading";
 import DeveloperNotFound from "./DeveloperNotFound";
 import api from "../services/api";
 import { ProjectImage, AvatarImage } from "../components/SafeImage";
+import { validateImageFile, validateImageUrl } from "../utils/imageValidation";
 
 const DeveloperProfile = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("overview");
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   const [isEditSaving, setIsEditSaving] = useState(false);
   const [isAddProjectSaving, setAddProjectSaving] = useState(false);
   const [isAddProject, setIsAddProject] = useState(false);
@@ -118,6 +128,8 @@ const DeveloperProfile = () => {
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setActiveTab("overview");
     fetchDeveloper();
   }, [id]);
 
@@ -141,6 +153,15 @@ const DeveloperProfile = () => {
       setIsEditSaving(true);
 
       const hasAvatar = Boolean(editForm.avatar && editForm.avatar.trim());
+      if (hasAvatar) {
+        const check = await validateImageUrl(editForm.avatar);
+        if (!check.valid) {
+          toast.error(check.error || "The avatar image URL could not be loaded.");
+          setIsEditSaving(false);
+          return;
+        }
+      }
+
       const payload = {
         ...editForm,
         avatar: hasAvatar ? editForm.avatar.trim() : null,
@@ -189,6 +210,16 @@ const DeveloperProfile = () => {
 
     try {
       setIsSetupSaving(true);
+
+      if (setupForm.avatar && setupForm.avatar.trim()) {
+        const check = await validateImageUrl(setupForm.avatar);
+        if (!check.valid) {
+          toast.error(check.error || "The avatar image URL could not be loaded.");
+          setIsSetupSaving(false);
+          return;
+        }
+      }
+
       const res = await api.post("/profile/", {
         ...setupForm,
         skills,
@@ -270,6 +301,15 @@ const DeveloperProfile = () => {
 
     try {
       setAddProjectSaving(true);
+
+      if (addForm.imageUrl && addForm.imageUrl.trim()) {
+        const check = await validateImageUrl(addForm.imageUrl);
+        if (!check.valid) {
+          toast.error(check.error || "The project image URL could not be loaded.");
+          setAddProjectSaving(false);
+          return;
+        }
+      }
 
       const formData = new FormData();
       formData.append("title", addForm.title.trim());
@@ -369,6 +409,12 @@ const DeveloperProfile = () => {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
+                          const check = validateImageFile(file);
+                          if (!check.valid) {
+                            toast.error(check.error);
+                            e.target.value = "";
+                            return;
+                          }
                           const reader = new FileReader();
                           reader.onload = (ev) => {
                             setSetupForm((prev) => ({
@@ -635,134 +681,312 @@ const DeveloperProfile = () => {
         </div>
       </div>
 
+      {/* Segmented Tab Navigation */}
+      <div className="max-w-6xl mx-auto px-6 mb-6">
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-900/90 border border-zinc-800 rounded-xl w-fit">
+          <button
+            type="button"
+            onClick={() => handleTabChange("overview")}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === "overview"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+            }`}
+          >
+            <Info className="w-3.5 h-3.5" /> Overview
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("projects")}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === "projects"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+            }`}
+          >
+            <FolderOpen className="w-3.5 h-3.5" />
+            Projects
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                activeTab === "projects"
+                  ? "bg-indigo-700/80 text-white"
+                  : "bg-zinc-800 text-zinc-400"
+              }`}
+            >
+              {developerProjects.length}
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Profile Details Layout */}
       <div className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Sidebar Info */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* About / Bio */}
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
-                <Info className="w-4 h-4 text-indigo-400" /> About
-              </h2>
-              <p className="text-xs text-zinc-300 leading-relaxed">
-                {developerBio}
-              </p>
-            </div>
+        {activeTab === "overview" ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Sidebar Info */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* About / Bio */}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
+                  <Info className="w-4 h-4 text-indigo-400" /> About
+                </h2>
+                <p className="text-xs text-zinc-300 leading-relaxed">
+                  {developerBio}
+                </p>
+              </div>
 
-            {/* Skills */}
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
-                <Code className="w-4 h-4 text-indigo-400" /> Technologies & Skills
-              </h2>
-              {developerSkills.length === 0 ? (
-                <p className="text-xs text-zinc-500">No skills listed yet.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {developerSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2.5 py-1 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-zinc-200 text-xs font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Links & Contact */}
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-indigo-400" /> Links & Contact
-              </h2>
-
-              {developerEmail && (
-                <div className="flex items-center gap-3 text-xs text-zinc-300">
-                  <Mail className="w-4 h-4 text-zinc-500 shrink-0" />
-                  <a
-                    href={`mailto:${developerEmail}`}
-                    className="hover:text-indigo-400 truncate"
-                  >
-                    {developerEmail}
-                  </a>
-                </div>
-              )}
-
-              {developerPortfolio && (
-                <div className="flex items-center gap-3 text-xs text-zinc-300">
-                  <Globe className="w-4 h-4 text-zinc-500 shrink-0" />
-                  <a
-                    href={
-                      developerPortfolio.startsWith("http")
-                        ? developerPortfolio
-                        : `https://${developerPortfolio}`
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-indigo-400 truncate"
-                  >
-                    Portfolio Website
-                  </a>
-                </div>
-              )}
-
-              {developerEducation && (
-                <div className="flex items-center gap-3 text-xs text-zinc-300 pt-1">
-                  <GraduationCap className="w-4 h-4 text-zinc-500 shrink-0" />
-                  <span className="truncate">{developerEducation}</span>
-                </div>
-              )}
-
-              {/* Social icons */}
-              <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
-                {developerGithub && (
-                  <a
-                    href={
-                      developerGithub.startsWith("http")
-                        ? developerGithub
-                        : `https://${developerGithub}`
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
-                    title="GitHub Profile"
-                  >
-                    <Github className="w-4 h-4" />
-                  </a>
-                )}
-                {developerLinkedin && (
-                  <a
-                    href={
-                      developerLinkedin.startsWith("http")
-                        ? developerLinkedin
-                        : `https://${developerLinkedin}`
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
-                    title="LinkedIn Profile"
-                  >
-                    <Linkedin className="w-4 h-4" />
-                  </a>
+              {/* Skills */}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
+                  <Code className="w-4 h-4 text-indigo-400" /> Technologies & Skills
+                </h2>
+                {developerSkills.length === 0 ? (
+                  <p className="text-xs text-zinc-500">No skills listed yet.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {developerSkills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-2.5 py-1 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-zinc-200 text-xs font-medium"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
+
+              {/* Links & Contact */}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-indigo-400" /> Links & Contact
+                </h2>
+
+                {developerEmail && (
+                  <div className="flex items-center gap-3 text-xs text-zinc-300">
+                    <Mail className="w-4 h-4 text-zinc-500 shrink-0" />
+                    <a
+                      href={`mailto:${developerEmail}`}
+                      className="hover:text-indigo-400 truncate"
+                    >
+                      {developerEmail}
+                    </a>
+                  </div>
+                )}
+
+                {developerPortfolio && (
+                  <div className="flex items-center gap-3 text-xs text-zinc-300">
+                    <Globe className="w-4 h-4 text-zinc-500 shrink-0" />
+                    <a
+                      href={
+                        developerPortfolio.startsWith("http")
+                          ? developerPortfolio
+                          : `https://${developerPortfolio}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-indigo-400 truncate"
+                    >
+                      Portfolio Website
+                    </a>
+                  </div>
+                )}
+
+                {developerEducation && (
+                  <div className="flex items-center gap-3 text-xs text-zinc-300 pt-1">
+                    <GraduationCap className="w-4 h-4 text-zinc-500 shrink-0" />
+                    <span className="truncate">{developerEducation}</span>
+                  </div>
+                )}
+
+                {/* Social icons */}
+                <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
+                  {developerGithub && (
+                    <a
+                      href={
+                        developerGithub.startsWith("http")
+                          ? developerGithub
+                          : `https://${developerGithub}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
+                      title="GitHub Profile"
+                    >
+                      <Github className="w-4 h-4" />
+                    </a>
+                  )}
+                  {developerLinkedin && (
+                    <a
+                      href={
+                        developerLinkedin.startsWith("http")
+                          ? developerLinkedin
+                          : `https://${developerLinkedin}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors"
+                      title="LinkedIn Profile"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Featured Projects Preview */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5 text-indigo-400" />
+                  Featured Projects
+                </h2>
+                {developerProjects.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange("projects")}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                  >
+                    View all {developerProjects.length} projects →
+                  </button>
+                )}
+              </div>
+
+              {developerProjects.length === 0 ? (
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-12 text-center">
+                  <FolderOpen className="w-10 h-10 mx-auto mb-3 text-zinc-600" />
+                  <h3 className="text-sm font-semibold text-zinc-200 mb-1">
+                    No projects published yet
+                  </h3>
+                  <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-6">
+                    {isOwnProfile
+                      ? "Showcase your work! Add projects with screenshots and links to demonstrate your engineering skills."
+                      : "This developer has not added any public projects yet."}
+                  </p>
+                  {isOwnProfile && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddProject(true)}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+                    >
+                      Add Your First Project
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {developerProjects.slice(0, 3).map((project) => (
+                    <div
+                      key={project.id || project._id}
+                      className="rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900/80 hover:border-zinc-700/80 transition-all p-5 sm:p-6"
+                    >
+                      <div className="flex flex-col sm:flex-row gap-5">
+                        <div className="shrink-0 w-full sm:w-48 h-32 rounded-xl overflow-hidden border border-zinc-800">
+                          <ProjectImage
+                            src={project.image}
+                            alt={project.title}
+                            className="w-full h-full object-cover"
+                            fallbackClassName="w-full h-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600"
+                            iconClassName="w-8 h-8"
+                            icon={Code}
+                          />
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                              <h3 className="text-base font-bold text-white truncate">
+                                {project.title}
+                              </h3>
+                              {project.duration && (
+                                <span className="text-[11px] text-zinc-500 shrink-0">
+                                  {project.duration}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed mb-3">
+                              {project.description}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 mb-4">
+                              {(project.technologies || project.tech || []).map(
+                                (tech) => (
+                                  <span
+                                    key={tech}
+                                    className="px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-[10px] font-medium text-zinc-300"
+                                  >
+                                    {tech}
+                                  </span>
+                                ),
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 pt-2 border-t border-zinc-800/60">
+                            <Link
+                              to={`/project/${project.id || project._id}`}
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                            >
+                              Details <ExternalLink className="w-3 h-3" />
+                            </Link>
+                            {(project.githubLink || project.github_link) && (
+                              <a
+                                href={project.githubLink || project.github_link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
+                              >
+                                <Github className="w-3.5 h-3.5" /> Code
+                              </a>
+                            )}
+                            {(project.liveDemo || project.live_demo) && (
+                              <a
+                                href={project.liveDemo || project.live_demo}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
+                              >
+                                <Globe className="w-3.5 h-3.5" /> Demo
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {developerProjects.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange("projects")}
+                      className="w-full py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors text-center"
+                    >
+                      Show all {developerProjects.length} projects →
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Right Column: Projects Showcase */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <FolderOpen className="w-5 h-5 text-indigo-400" />
-                Projects ({developerProjects.length})
-              </h2>
+        ) : (
+          /* Projects Tab View */
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5 text-indigo-400" />
+                  Projects Showcase ({developerProjects.length})
+                </h2>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Complete portfolio and engineering contributions.
+                </p>
+              </div>
 
               {isOwnProfile && (
                 <button
                   type="button"
                   onClick={() => setIsAddProject(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Project
                 </button>
@@ -791,14 +1015,14 @@ const DeveloperProfile = () => {
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {developerProjects.map((project) => (
                   <div
                     key={project.id || project._id}
-                    className="rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900/80 hover:border-zinc-700/80 transition-all p-5 sm:p-6"
+                    className="rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900/80 hover:border-zinc-700/80 transition-all p-5 flex flex-col justify-between"
                   >
-                    <div className="flex flex-col sm:flex-row gap-5">
-                      <div className="shrink-0 w-full sm:w-48 h-32 rounded-xl overflow-hidden border border-zinc-800">
+                    <div>
+                      <div className="w-full h-44 rounded-xl overflow-hidden border border-zinc-800 mb-4">
                         <ProjectImage
                           src={project.image}
                           alt={project.title}
@@ -809,71 +1033,67 @@ const DeveloperProfile = () => {
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-start justify-between gap-3 mb-1.5">
-                            <h3 className="text-base font-bold text-white truncate">
-                              {project.title}
-                            </h3>
-                            {project.duration && (
-                              <span className="text-[11px] text-zinc-500 shrink-0">
-                                {project.duration}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed mb-3">
-                            {project.description}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5 mb-4">
-                            {(project.technologies || project.tech || []).map(
-                              (tech) => (
-                                <span
-                                  key={tech}
-                                  className="px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-[10px] font-medium text-zinc-300"
-                                >
-                                  {tech}
-                                </span>
-                              ),
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 pt-2 border-t border-zinc-800/60">
-                          <Link
-                            to={`/project/${project.id || project._id}`}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
-                          >
-                            Details <ExternalLink className="w-3 h-3" />
-                          </Link>
-                          {(project.githubLink || project.github_link) && (
-                            <a
-                              href={project.githubLink || project.github_link}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
-                            >
-                              <Github className="w-3.5 h-3.5" /> Code
-                            </a>
-                          )}
-                          {(project.liveDemo || project.live_demo) && (
-                            <a
-                              href={project.liveDemo || project.live_demo}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
-                            >
-                              <Globe className="w-3.5 h-3.5" /> Demo
-                            </a>
-                          )}
-                        </div>
+                      <div className="flex items-start justify-between gap-3 mb-1.5">
+                        <h3 className="text-base font-bold text-white truncate">
+                          {project.title}
+                        </h3>
+                        {project.duration && (
+                          <span className="text-[11px] text-zinc-500 shrink-0">
+                            {project.duration}
+                          </span>
+                        )}
                       </div>
+                      <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed mb-3">
+                        {project.description}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {(project.technologies || project.tech || []).map(
+                          (tech) => (
+                            <span
+                              key={tech}
+                              className="px-2 py-0.5 rounded-md bg-zinc-800/80 border border-zinc-700/50 text-[10px] font-medium text-zinc-300"
+                            >
+                              {tech}
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-3 border-t border-zinc-800/60">
+                      <Link
+                        to={`/project/${project.id || project._id}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+                      >
+                        Details <ExternalLink className="w-3 h-3" />
+                      </Link>
+                      {(project.githubLink || project.github_link) && (
+                        <a
+                          href={project.githubLink || project.github_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
+                        >
+                          <Github className="w-3.5 h-3.5" /> Code
+                        </a>
+                      )}
+                      {(project.liveDemo || project.live_demo) && (
+                        <a
+                          href={project.liveDemo || project.live_demo}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
+                        >
+                          <Globe className="w-3.5 h-3.5" /> Demo
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Edit Profile Modal */}
@@ -914,6 +1134,12 @@ const DeveloperProfile = () => {
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (file) {
+                            const check = validateImageFile(file);
+                            if (!check.valid) {
+                              toast.error(check.error);
+                              e.target.value = "";
+                              return;
+                            }
                             const reader = new FileReader();
                             reader.onload = (ev) => {
                               setEditForm((prev) => ({
@@ -1218,6 +1444,12 @@ const DeveloperProfile = () => {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
+                          const check = validateImageFile(file);
+                          if (!check.valid) {
+                            toast.error(check.error);
+                            e.target.value = "";
+                            return;
+                          }
                           setAddForm({ ...addForm, file, imageUrl: "" });
                         }
                       }}
@@ -1228,10 +1460,25 @@ const DeveloperProfile = () => {
                       {addForm.file.name}
                     </span>
                   )}
+                  {(addForm.file || addForm.imageUrl) && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAddForm((prev) => ({
+                          ...prev,
+                          file: null,
+                          imageUrl: "",
+                        }))
+                      }
+                      className="px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                    >
+                      Clear image
+                    </button>
+                  )}
                 </div>
                 <input
                   type="url"
-                  placeholder="Or paste an image URL..."
+                  placeholder="Or paste an image URL (https://...)"
                   value={addForm.imageUrl}
                   onChange={(e) =>
                     setAddForm({
@@ -1242,6 +1489,31 @@ const DeveloperProfile = () => {
                   }
                   className="w-full px-3 py-1.5 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
                 />
+
+                {(addForm.file || addForm.imageUrl) && (
+                  <div className="mt-2 pt-2 border-t border-zinc-800/80">
+                    <span className="text-[11px] text-zinc-400 block mb-1.5">
+                      Preview:
+                    </span>
+                    <div className="w-40 h-24 rounded-lg overflow-hidden border border-zinc-700 bg-zinc-900 flex items-center justify-center">
+                      <img
+                        src={
+                          addForm.file
+                            ? URL.createObjectURL(addForm.file)
+                            : addForm.imageUrl
+                        }
+                        alt="Project preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          toast.error(
+                            "Unable to preview image from URL. Please check the URL.",
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-3 pt-4 border-t border-zinc-800">
