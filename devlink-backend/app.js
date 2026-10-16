@@ -42,8 +42,10 @@ const isOriginAllowed = (origin) => {
   if (!origin) return true; // Non-browser clients (curl, Postman, server-to-server)
   const normalized = origin.replace(/\/$/, "");
   if (allowedOrigins.includes(normalized)) return true;
-  // Allow all Vercel preview deployments for the frontend
-  if (/^https:\/\/dev-link-frontend[a-zA-Z0-9-]*\.vercel\.app$/.test(normalized)) {
+  // Allow all DevLink Vercel preview & production deployments
+  if (
+    /^https:\/\/(dev-link|devlink)[a-zA-Z0-9-]*\.vercel\.app$/.test(normalized)
+  ) {
     return true;
   }
   // In development, allow any localhost/127.0.0.1 port
