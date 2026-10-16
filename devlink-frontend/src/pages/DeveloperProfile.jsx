@@ -140,8 +140,11 @@ const DeveloperProfile = () => {
     try {
       setIsEditSaving(true);
 
+      const hasAvatar = Boolean(editForm.avatar && editForm.avatar.trim());
       const payload = {
         ...editForm,
+        avatar: hasAvatar ? editForm.avatar.trim() : null,
+        removeAvatar: !hasAvatar,
         skills: parsedSkills,
       };
 
@@ -153,7 +156,7 @@ const DeveloperProfile = () => {
         setUser((prev) => ({
           ...prev,
           name: updatedProfile.user?.name || editForm.name || prev?.name,
-          avatar: updatedProfile.avatar || prev?.avatar,
+          avatar: updatedProfile.avatar || null,
           title: updatedProfile.title || prev?.title,
         }));
       }
@@ -196,7 +199,7 @@ const DeveloperProfile = () => {
       if (createdProfile && setUser) {
         setUser((prev) => ({
           ...prev,
-          avatar: createdProfile.avatar || prev?.avatar,
+          avatar: createdProfile.avatar || null,
           title: createdProfile.title || prev?.title,
         }));
       }
@@ -378,17 +381,17 @@ const DeveloperProfile = () => {
                       }}
                     />
                   </label>
-                  {setupForm.avatar && (
+                  {setupForm.avatar ? (
                     <button
                       type="button"
                       onClick={() =>
                         setSetupForm((prev) => ({ ...prev, avatar: "" }))
                       }
-                      className="text-xs text-red-400 hover:text-red-300"
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-colors"
                     >
-                      Remove
+                      Remove Photo
                     </button>
-                  )}
+                  ) : null}
                 </div>
                 <input
                   type="url"
@@ -923,16 +926,20 @@ const DeveloperProfile = () => {
                         }}
                       />
                     </label>
-                    {editForm.avatar && (
+                    {editForm.avatar ? (
                       <button
                         type="button"
                         onClick={() =>
                           setEditForm((prev) => ({ ...prev, avatar: "" }))
                         }
-                        className="text-xs text-red-400 hover:text-red-300"
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-colors"
                       >
-                        Remove
+                        Remove Photo
                       </button>
+                    ) : (
+                      <span className="text-[11px] text-zinc-500 italic">
+                        Photo removed (will use default icon)
+                      </span>
                     )}
                   </div>
                   <input

@@ -108,8 +108,23 @@ export const createOrUpdateProfile = async (req, res, next) => {
       req.user.userId
     );
 
-    // Retain existing avatar if not explicitly overwritten
-    const finalAvatar = uploadedAvatar || (existingProfile ? existingProfile.avatar : null);
+    // Determine avatar: file upload, explicit removal, URL string, or keep existing
+    let finalAvatar = null;
+    if (req.file) {
+      finalAvatar =
+        req.file.path || req.file.secure_url || req.file.url;
+    } else if (
+      req.body.removeAvatar === true ||
+      req.body.removeAvatar === "true" ||
+      avatar === "" ||
+      avatar === null
+    ) {
+      finalAvatar = null;
+    } else if (typeof avatar === "string" && avatar.trim()) {
+      finalAvatar = avatar.trim();
+    } else {
+      finalAvatar = existingProfile ? existingProfile.avatar : null;
+    }
 
     const profileData = {
       user: req.user.userId,
@@ -122,7 +137,7 @@ export const createOrUpdateProfile = async (req, res, next) => {
       github: github?.trim() || null,
       portfolio: portfolio?.trim() || null,
       linkedin: resolvedLinkedin,
-      avatar: finalAvatar || null,
+      avatar: finalAvatar,
     };
 
     // Update existing profile
