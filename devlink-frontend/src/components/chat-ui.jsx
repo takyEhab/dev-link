@@ -11,6 +11,7 @@ import {
   CheckCheck,
   UserRound,
   Info,
+  MessageSquare,
 } from "lucide-react";
 import api, { SOCKET_URL } from "../services/api";
 import { UserContext } from "../context/UserContext";
@@ -26,7 +27,6 @@ const formatChatDate = (value) => {
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
-    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
@@ -43,9 +43,7 @@ const chatEmojis = [
   "🤔",
   "😅",
   "😭",
-  "😡",
   "👍",
-  "👎",
   "❤️",
   "🔥",
   "🎉",
@@ -53,68 +51,9 @@ const chatEmojis = [
   "🚀",
   "💯",
   "🙏",
+  "💡",
+  "💻",
 ];
-
-// Reusing the same UI components
-const Button = ({
-  children,
-  variant = "default",
-  size = "default",
-  className = "",
-  ...props
-}) => {
-  const baseClasses =
-    "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background";
-
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline:
-      "border border-gray-600 text-white hover:bg-gray-800 bg-transparent",
-    ghost: "hover:bg-gray-800 text-gray-300 hover:text-white",
-    secondary: "bg-gray-700 text-white hover:bg-gray-600",
-  };
-
-  const sizes = {
-    default: "h-10 py-2 px-4",
-    sm: "h-8 py-1 px-3 text-xs",
-    lg: "h-12 py-3 px-6 text-base",
-    icon: "h-10 w-10",
-  };
-
-  return (
-    <button
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Input = ({ className = "", ...props }) => (
-  <input
-    className={`flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className}`}
-    {...props}
-  />
-);
-
-const Badge = ({ children, variant = "default", className = "", ...props }) => {
-  const variants = {
-    default: "bg-blue-600 hover:bg-blue-700 text-white",
-    secondary: "bg-gray-600 hover:bg-gray-500 text-white",
-    success: "bg-green-600 hover:bg-green-700 text-white",
-    warning: "bg-yellow-600 hover:bg-yellow-700 text-white",
-  };
-
-  return (
-    <div
-      className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold transition-colors ${variants[variant]} ${className}`}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-};
 
 const ChatAvatar = ({ avatar, name, className }) => {
   const [imageFailed, setImageFailed] = useState(false);
@@ -122,10 +61,10 @@ const ChatAvatar = ({ avatar, name, className }) => {
   if (!avatar || imageFailed) {
     return (
       <div
-        className={`${className} bg-blue-500/15 border border-blue-400/30 flex items-center justify-center`}
+        className={`${className} bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400`}
         aria-label={`${name} avatar placeholder`}
       >
-        <UserRound className="w-1/2 h-1/2 text-blue-300" />
+        <UserRound className="w-1/2 h-1/2" />
       </div>
     );
   }
@@ -140,240 +79,108 @@ const ChatAvatar = ({ avatar, name, className }) => {
   );
 };
 
-// Kept as a migration reference until existing mock conversations are removed.
-const _chatData = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face",
-    role: "Project Manager",
-    company: "TechCorp Inc.",
-    lastMessage: "Thanks for the proposal! When can we schedule a call?",
-    timestamp: "2 min ago",
-    unread: 2,
-    online: true,
-    messages: [
-      {
-        id: 1,
-        sender: "other",
-        content:
-          "Hi! I saw your profile and I'm interested in discussing a React project with you.",
-        timestamp: "10:30 AM",
-        status: "read",
-      },
-      {
-        id: 2,
-        sender: "me",
-        content:
-          "Hello Sarah! I'd be happy to discuss your project. Could you tell me more about the requirements?",
-        timestamp: "10:32 AM",
-        status: "read",
-      },
-      {
-        id: 3,
-        sender: "other",
-        content:
-          "We're building a dashboard for our internal team. It needs to handle real-time data visualization and user management. The tech stack should include React, Node.js, and PostgreSQL.",
-        timestamp: "10:35 AM",
-        status: "read",
-      },
-      {
-        id: 4,
-        sender: "me",
-        content:
-          "That sounds like a great project! I have extensive experience with that exact tech stack. I can provide a detailed proposal with timeline and cost estimates. What's your expected timeline?",
-        timestamp: "10:40 AM",
-        status: "read",
-      },
-      {
-        id: 5,
-        sender: "other",
-        content:
-          "We're looking to have this completed within 8-10 weeks. Budget is flexible for the right developer.",
-        timestamp: "10:45 AM",
-        status: "read",
-      },
-      {
-        id: 6,
-        sender: "me",
-        content:
-          "Perfect! That timeline works well for me. I'll prepare a comprehensive proposal including project phases, deliverables, and pricing. I can have it ready by tomorrow morning.",
-        timestamp: "11:00 AM",
-        status: "delivered",
-      },
-      {
-        id: 7,
-        sender: "other",
-        content: "Thanks for the proposal! When can we schedule a call?",
-        timestamp: "2:15 PM",
-        status: "read",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Mike Chen",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
-    role: "Startup Founder",
-    company: "InnovateLab",
-    lastMessage: "The mobile app mockups look great!",
-    timestamp: "1 hour ago",
-    unread: 0,
-    online: false,
-    messages: [
-      {
-        id: 1,
-        sender: "other",
-        content:
-          "Hey! I need help with a React Native app. Are you available for a quick project?",
-        timestamp: "Yesterday",
-        status: "read",
-      },
-      {
-        id: 2,
-        sender: "me",
-        content:
-          "Hi Mike! Yes, I'm available. What kind of app are you looking to build?",
-        timestamp: "Yesterday",
-        status: "read",
-      },
-      {
-        id: 3,
-        sender: "other",
-        content: "The mobile app mockups look great!",
-        timestamp: "1:30 PM",
-        status: "read",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=40&h=40&fit=crop&crop=face",
-    role: "CTO",
-    company: "DataFlow Systems",
-    lastMessage: "Can you start next Monday?",
-    timestamp: "3 hours ago",
-    unread: 1,
-    online: true,
-    messages: [
-      {
-        id: 1,
-        sender: "other",
-        content: "We need a senior developer for our backend team. Interested?",
-        timestamp: "11:00 AM",
-        status: "read",
-      },
-      {
-        id: 2,
-        sender: "me",
-        content:
-          "Definitely interested! Could you share more details about the role?",
-        timestamp: "11:15 AM",
-        status: "read",
-      },
-      {
-        id: 3,
-        sender: "other",
-        content: "Can you start next Monday?",
-        timestamp: "12:30 PM",
-        status: "delivered",
-      },
-    ],
-  },
-];
-
 // Chat List Component
 const ChatList = ({ chats, selectedChat, onSelectChat, onBack }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredChats = chats.filter(
-    (chat) =>
-      chat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      chat.company.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredChats = chats.filter((chat) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      chat.name?.toLowerCase().includes(term) ||
+      chat.role?.toLowerCase().includes(term) ||
+      chat.lastMessage?.toLowerCase().includes(term)
+    );
+  });
 
   return (
-    <div className="w-full lg:w-80 h-full min-h-0 bg-gray-800 border-r border-gray-700 flex flex-col">
+    <div className="w-full lg:w-80 h-full min-h-0 bg-zinc-950 border-r border-zinc-800 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={onBack} className="lg:hidden">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h2 className="text-xl font-semibold text-white">Messages</h2>
-          <span className="text-xs text-gray-500">{chats.length} chats</span>
+      <div className="p-4 border-b border-zinc-800">
+        <div className="flex items-center justify-between mb-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1 inline" /> Back
+            </button>
+          )}
+          <h2 className="text-base font-bold text-white tracking-tight">
+            Messages
+          </h2>
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+            {chats.length}
+          </span>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-3.5 h-3.5 pointer-events-none" />
+          <input
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="w-full h-9 pl-9 pr-3 rounded-lg bg-zinc-900/90 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
           />
         </div>
       </div>
 
-      {/* Chat List */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
-        {filteredChats.map((chat) => (
-          <div
-            key={chat.id}
-            onClick={() => onSelectChat(chat)}
-            className={`p-4 border-b border-gray-700 cursor-pointer transition-colors hover:bg-gray-700 ${
-              selectedChat?.id === chat.id ? "bg-gray-700" : ""
-            }`}
-          >
-            <div className="flex items-start space-x-3">
-              {/* Avatar */}
-              <div className="relative">
-                <ChatAvatar
-                  avatar={chat.avatar}
-                  name={chat.name}
-                  className="w-12 h-12 rounded-full"
-                />
-                {chat.online && (
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-gray-800 rounded-full"></div>
+      {/* Chat List Items */}
+      <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-zinc-900">
+        {filteredChats.length === 0 ? (
+          <div className="p-8 text-center text-xs text-zinc-500">
+            {searchTerm ? "No matching conversations" : "No conversations yet"}
+          </div>
+        ) : (
+          filteredChats.map((chat) => (
+            <div
+              key={chat.id}
+              onClick={() => onSelectChat(chat)}
+              className={`p-3.5 cursor-pointer transition-colors ${
+                selectedChat?.id === chat.id
+                  ? "bg-zinc-900/90 border-l-2 border-indigo-500"
+                  : "hover:bg-zinc-900/50"
+              }`}
+            >
+              <div className="flex items-start space-x-3">
+                <div className="relative shrink-0">
+                  <ChatAvatar
+                    avatar={chat.avatar}
+                    name={chat.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  {chat.online && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-zinc-950 rounded-full" />
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h3 className="text-xs font-semibold text-zinc-200 truncate">
+                      {chat.name}
+                    </h3>
+                    <span className="text-[10px] text-zinc-500 shrink-0">
+                      {formatChatDate(chat.timestamp)}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 truncate mb-1">
+                    {chat.role}
+                    {chat.company ? ` at ${chat.company}` : ""}
+                  </p>
+                  <p className="text-xs text-zinc-400 truncate">
+                    {chat.lastMessage}
+                  </p>
+                </div>
+
+                {chat.unread > 0 && (
+                  <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-bold bg-indigo-600 text-white rounded-full">
+                    {chat.unread}
+                  </span>
                 )}
               </div>
-
-              {/* Chat Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-white truncate">
-                    {chat.name}
-                  </h3>
-                  <span className="text-xs text-gray-400">
-                    {formatChatDate(chat.timestamp)}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400 mb-1">
-                  {chat.role} at {chat.company}
-                </p>
-                <p className="text-sm text-gray-300 truncate">
-                  {chat.lastMessage}
-                </p>
-              </div>
-
-              {/* Unread Badge */}
-              {chat.unread > 0 && (
-                <Badge
-                  variant="default"
-                  className="bg-blue-600 text-white min-w-[20px] h-5 text-xs"
-                >
-                  {chat.unread}
-                </Badge>
-              )}
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
@@ -384,34 +191,36 @@ const Message = ({ message, isMe }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "sent":
-        return <Check className="w-3 h-3 text-gray-400" />;
+        return <Check className="w-3 h-3 text-zinc-500" />;
       case "delivered":
-        return <CheckCheck className="w-3 h-3 text-gray-400" />;
+        return <CheckCheck className="w-3 h-3 text-zinc-500" />;
       case "read":
-        return <CheckCheck className="w-3 h-3 text-blue-400" />;
+        return <CheckCheck className="w-3 h-3 text-indigo-400" />;
       default:
         return null;
     }
   };
 
   return (
-    <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-3`}>
+    <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2.5`}>
       <div
-        className={`max-w-[85%] lg:max-w-md ${isMe ? "order-2" : "order-1"}`}
+        className={`max-w-[85%] sm:max-w-md ${isMe ? "order-2" : "order-1"}`}
       >
         <div
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-3.5 py-2 text-xs leading-relaxed ${
             isMe
-              ? "bg-blue-600 text-white rounded-br-sm"
-              : "bg-gray-700 text-white rounded-bl-sm"
+              ? "bg-indigo-600 text-white rounded-2xl rounded-br-sm shadow-sm"
+              : "bg-zinc-800/90 text-zinc-100 rounded-2xl rounded-bl-sm border border-zinc-700/60"
           }`}
         >
-          <p className="text-sm">{message.content}</p>
+          <p className="break-words">{message.content}</p>
         </div>
         <div
-          className={`flex items-center mt-1 space-x-1 ${isMe ? "justify-end" : "justify-start"}`}
+          className={`flex items-center mt-1 space-x-1 ${
+            isMe ? "justify-end" : "justify-start"
+          }`}
         >
-          <span className="text-xs text-gray-400">
+          <span className="text-[10px] text-zinc-500">
             {formatChatDate(message.timestamp)}
           </span>
           {isMe && getStatusIcon(message.status)}
@@ -454,107 +263,115 @@ const ChatWindow = ({ chat, onBack, onSendMessage }) => {
 
   if (!chat) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Send className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-white mb-2">
-            No conversation selected
-          </h3>
-          <p className="text-gray-400">
-            Choose a conversation from the sidebar to start messaging
-          </p>
+      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950 p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
+          <MessageSquare className="w-6 h-6 text-zinc-500" />
         </div>
+        <h3 className="text-base font-semibold text-white mb-1">
+          No conversation selected
+        </h3>
+        <p className="text-xs text-zinc-500 max-w-xs">
+          Select a conversation from the left, or visit a developer's profile to
+          send them a message.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-gray-900">
+    <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-zinc-950">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-700 bg-gray-800">
+      <div className="p-3.5 border-b border-zinc-800 bg-zinc-900/60 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={onBack} className="lg:hidden">
+          <div className="flex items-center space-x-3 min-w-0">
+            <button
+              onClick={onBack}
+              className="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
+            >
               <ArrowLeft className="w-4 h-4" />
-            </Button>
+            </button>
             <Link
               to={chat.otherUserId ? `/developer/${chat.otherUserId}` : "#"}
               title="Open developer profile"
               onClick={(event) => {
                 if (!chat.otherUserId) event.preventDefault();
               }}
+              className="shrink-0"
             >
               <div className="relative">
                 <ChatAvatar
                   avatar={chat.avatar}
                   name={chat.name}
-                  className="w-10 h-10 rounded-full"
+                  className="w-9 h-9 rounded-full object-cover border border-zinc-700"
                 />
                 {chat.online && (
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full"></div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-zinc-950 rounded-full" />
                 )}
               </div>
             </Link>
-            <div>
+            <div className="min-w-0">
               <Link
                 to={chat.otherUserId ? `/developer/${chat.otherUserId}` : "#"}
                 title="Open developer profile"
                 onClick={(event) => {
                   if (!chat.otherUserId) event.preventDefault();
                 }}
-                className="text-sm font-medium text-white hover:text-blue-300 transition-colors"
+                className="text-xs font-semibold text-white hover:text-indigo-400 transition-colors truncate block"
               >
                 {chat.name}
               </Link>
-              <p className="text-xs text-gray-400">
-                {chat.role} at {chat.company}
+              <p className="text-[11px] text-zinc-500 truncate">
+                {chat.role}
+                {chat.company ? ` at ${chat.company}` : ""}
                 {chat.online && " • Online"}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-1">
-            <Button
+          <div className="flex items-center space-x-1 shrink-0">
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
               title="Conversation information"
-              aria-label="Conversation information"
               onClick={() =>
                 toast.info(`${chat.name} - ${chat.role || "Developer"}`)
               }
+              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
             >
               <Info className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages Feed */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-1">
-        {chat.messages.map((message) => (
-          <Message
-            key={message.id}
-            message={message}
-            isMe={message.sender === "me"}
-          />
-        ))}
+        {chat.messages.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-xs text-zinc-600">
+            No messages yet. Say hello!
+          </div>
+        ) : (
+          chat.messages.map((message) => (
+            <Message
+              key={message.id}
+              message={message}
+              isMe={message.sender === "me"}
+            />
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="relative shrink-0 p-3 sm:p-4 border-t border-gray-700 bg-gray-800">
+      {/* Message Input Bar */}
+      <div className="relative shrink-0 p-3 border-t border-zinc-800 bg-zinc-900/40">
         {showEmojiPicker && (
-          <div className="absolute bottom-full right-3 mb-2 w-64 rounded-xl border border-gray-600 bg-gray-800 p-3 shadow-2xl">
+          <div className="absolute bottom-full right-3 mb-2 w-64 rounded-xl border border-zinc-800 bg-zinc-900 p-2.5 shadow-2xl z-20">
             <div className="grid grid-cols-5 gap-1">
               {chatEmojis.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
                   onClick={() => handleEmojiSelect(emoji)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg text-xl hover:bg-gray-700 transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-lg hover:bg-zinc-800 transition-colors"
                   aria-label={`Add ${emoji} emoji`}
                 >
                   {emoji}
@@ -563,40 +380,39 @@ const ChatWindow = ({ chat, onBack, onSendMessage }) => {
             </div>
           </div>
         )}
-        <form onSubmit={handleSendMessage} className="flex items-end space-x-2">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 bg-gray-700 rounded-lg px-3 py-2">
-              <input
-                ref={messageInputRef}
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 bg-transparent text-white placeholder-gray-400 focus:outline-none"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                title="Add emoji"
-                aria-label="Add emoji"
-                onClick={() => setShowEmojiPicker((visible) => !visible)}
-              >
-                <Smile className="w-4 h-4" />
-              </Button>
-            </div>
+        <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+          <div className="flex-1 relative flex items-center bg-zinc-900 rounded-lg border border-zinc-800 px-3 py-1.5 focus-within:border-indigo-500 transition-colors">
+            <input
+              ref={messageInputRef}
+              type="text"
+              placeholder="Type a message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="flex-1 bg-transparent text-xs text-white placeholder-zinc-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              title="Add emoji"
+              onClick={() => setShowEmojiPicker((visible) => !visible)}
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
           </div>
-          <Button type="submit" size="icon" disabled={!newMessage.trim()}>
+          <button
+            type="submit"
+            disabled={!newMessage.trim()}
+            className="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-40 disabled:hover:bg-indigo-600 transition-colors shrink-0 shadow-sm"
+          >
             <Send className="w-4 h-4" />
-          </Button>
+          </button>
         </form>
       </div>
     </div>
   );
 };
 
-// Main Chat UI Component
+// Main Chat UI
 const ChatUI = ({ onBack }) => {
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -714,7 +530,7 @@ const ChatUI = ({ onBack }) => {
       toast.error(error.response?.data?.error || "Unable to load messages");
       return;
     }
-    setShowChatList(false); // Hide chat list on mobile when chat is selected
+    setShowChatList(false);
   };
 
   const handleBackToList = () => {
@@ -774,8 +590,8 @@ const ChatUI = ({ onBack }) => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] min-h-0 bg-gray-900 flex overflow-hidden">
-      {/* Chat List - Always visible on desktop, conditional on mobile */}
+    <div className="h-[calc(100vh-4rem)] min-h-0 bg-zinc-950 flex overflow-hidden">
+      {/* Chat List */}
       <div
         className={`${showChatList ? "block" : "hidden"} lg:block h-full min-h-0 shrink-0`}
       >
@@ -787,7 +603,7 @@ const ChatUI = ({ onBack }) => {
         />
       </div>
 
-      {/* Chat Window - Always visible on desktop, conditional on mobile */}
+      {/* Chat Window */}
       <div
         className={`${!showChatList ? "block" : "hidden"} lg:flex flex-1 min-w-0 min-h-0`}
       >

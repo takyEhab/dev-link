@@ -36,53 +36,56 @@ const ProjectDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-300 flex items-center justify-center">
-        Loading project...
+      <div className="min-h-screen bg-zinc-950 text-zinc-400 flex items-center justify-center text-sm">
+        Loading project details...
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center px-6 text-center">
-        <h1 className="text-3xl font-bold mb-3">Project not found</h1>
-        <p className="text-slate-400 mb-6">
+      <div className="min-h-screen bg-zinc-950 text-white flex flex-col items-center justify-center px-6 text-center">
+        <h1 className="text-2xl font-bold mb-2">Project not found</h1>
+        <p className="text-zinc-400 text-sm mb-6">
           This project may have been removed or is no longer available.
         </p>
-        <Link to="/" className="text-emerald-400 hover:text-emerald-300">
-          Back to projects
+        <Link
+          to="/"
+          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+        >
+          Back to Feed
         </Link>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/40 text-white">
-      <div className="max-w-6xl mx-auto px-6 py-10">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <div className="max-w-5xl mx-auto px-6 py-10">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 mb-8"
+          className="inline-flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-white mb-8 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> Back to projects
         </button>
 
-        <section className="grid lg:grid-cols-[1.5fr_1fr] gap-8 items-start">
+        <section className="grid lg:grid-cols-[1.4fr_1fr] gap-8 items-start">
           <div>
-            <div className="h-72 md:h-96 rounded-2xl overflow-hidden border border-slate-700 bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 flex items-center justify-center">
+            <div className="h-72 md:h-96 rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 flex items-center justify-center">
               <ProjectImage
                 src={project.image}
                 alt={project.title}
                 className="w-full h-full object-cover"
-                fallbackClassName="w-full h-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 flex items-center justify-center"
-                iconClassName="w-24 h-24 text-emerald-400/50"
+                fallbackClassName="w-full h-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"
+                iconClassName="w-16 h-16 text-zinc-600"
                 icon={Code2}
               />
             </div>
-            <div className="mt-8 flex flex-wrap gap-2">
-              {project.technologies.map((technology) => (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {project.technologies?.map((technology) => (
                 <span
                   key={technology}
-                  className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-sm"
+                  className="px-3 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs font-medium"
                 >
                   {technology}
                 </span>
@@ -90,52 +93,61 @@ const ProjectDetails = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-700 bg-slate-800/70 p-7">
-            <p className="text-sm uppercase tracking-widest text-emerald-400 mb-3">
-              Project showcase
-            </p>
-            <h1 className="text-4xl font-bold mb-5">{project.title}</h1>
-            <p className="text-slate-300 leading-7">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-7 backdrop-blur-sm">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-indigo-400 mb-2 block">
+              Project Showcase
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight text-white mb-4">
+              {project.title}
+            </h1>
+            <p className="text-zinc-400 text-sm leading-relaxed mb-6">
               {project.description || "No description has been added yet."}
             </p>
-            <div className="mt-7 space-y-4 text-slate-300">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-emerald-400" />{" "}
-                {project.duration || "Duration not specified"}
+
+            <div className="space-y-3 text-xs text-zinc-400 border-t border-zinc-800/80 pt-5">
+              <div className="flex items-center gap-2.5">
+                <Calendar className="w-4 h-4 text-zinc-500" />
+                <span>{project.duration || "Duration not specified"}</span>
               </div>
-              {project.author.location && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-emerald-400" />{" "}
-                  {project.author.location}
+              {project.author?.location && (
+                <div className="flex items-center gap-2.5">
+                  <MapPin className="w-4 h-4 text-zinc-500" />
+                  <span>{project.author.location}</span>
                 </div>
               )}
             </div>
-            <div className="mt-8 pt-6 border-t border-slate-700">
-              <p className="text-sm text-slate-400 mb-1">Created by</p>
+
+            <div className="mt-6 pt-6 border-t border-zinc-800/80">
+              <span className="text-[11px] uppercase tracking-wider text-zinc-500 block mb-1">
+                Created by
+              </span>
               <Link
-                to={`/developer/${project.author.id}`}
-                className="text-xl font-semibold text-white hover:text-emerald-300"
+                to={`/developer/${project.author?.id || project.author?._id}`}
+                className="text-lg font-semibold text-white hover:text-indigo-400 transition-colors"
               >
-                {project.author.name}
+                {project.author?.name}
               </Link>
-              <p className="text-sm text-emerald-400 mt-1">
-                {project.author.title}
-              </p>
-              <div className="flex flex-wrap gap-3 mt-6">
+              {project.author?.title && (
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  {project.author.title}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2 mt-6">
                 <Link
-                  to={`/developer/${project.author.id}`}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-medium"
+                  to={`/developer/${project.author?.id || project.author?._id}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-colors"
                 >
-                  <MessageCircle className="w-4 h-4" /> View Developer
+                  <MessageCircle className="w-3.5 h-3.5" /> View Developer
                 </Link>
                 {project.github_link && (
                   <a
                     href={project.github_link}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-700"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold transition-colors"
                   >
-                    <Github className="w-4 h-4" /> GitHub
+                    <Github className="w-3.5 h-3.5" /> Source Code
                   </a>
                 )}
                 {project.live_demo && (
@@ -143,9 +155,9 @@ const ProjectDetails = () => {
                     href={project.live_demo}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 hover:bg-slate-700"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold transition-colors"
                   >
-                    <ExternalLink className="w-4 h-4" /> Live demo
+                    <ExternalLink className="w-3.5 h-3.5" /> Live Demo
                   </a>
                 )}
               </div>

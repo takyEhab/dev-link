@@ -44,8 +44,11 @@ export const createOrUpdateProfile = async (req, res, next) => {
       github,
       portfolio,
       linkedin,
+      linkedIn,
       avatar,
     } = req.body;
+
+    const resolvedLinkedin = (linkedin || linkedIn)?.trim() || null;
 
     const uploadedAvatar =
       req.file?.path ||
@@ -118,7 +121,7 @@ export const createOrUpdateProfile = async (req, res, next) => {
       education: education?.trim() || null,
       github: github?.trim() || null,
       portfolio: portfolio?.trim() || null,
-      linkedin: linkedin?.trim() || null,
+      linkedin: resolvedLinkedin,
       avatar: finalAvatar || null,
     };
 

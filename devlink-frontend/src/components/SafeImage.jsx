@@ -9,7 +9,7 @@ export const ProjectImage = ({
   alt = "Project",
   className = "",
   fallbackClassName = "",
-  iconClassName = "w-10 h-10 text-indigo-300/70",
+  iconClassName = "w-8 h-8 text-zinc-500",
   icon: Icon = ImageIcon,
 }) => {
   const [hasError, setHasError] = useState(false);
@@ -23,7 +23,7 @@ export const ProjectImage = ({
       <div
         className={
           fallbackClassName ||
-          `${className} bg-gradient-to-br from-indigo-500/20 to-pink-500/20 flex items-center justify-center border border-zinc-600/50`
+          `${className} bg-zinc-900 border border-zinc-800 flex items-center justify-center`
         }
         aria-label={`${alt} placeholder`}
       >
@@ -50,7 +50,7 @@ export const AvatarImage = ({
   alt = "Developer",
   className = "",
   fallbackClassName = "",
-  iconClassName = "w-10 h-10 text-emerald-300/70",
+  iconClassName = "w-6 h-6 text-zinc-400",
 }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -63,7 +63,7 @@ export const AvatarImage = ({
       <div
         className={
           fallbackClassName ||
-          `${className} border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center`
+          `${className} border border-zinc-700 bg-zinc-800 flex items-center justify-center text-zinc-400`
         }
         aria-label={`${alt} avatar placeholder`}
       >

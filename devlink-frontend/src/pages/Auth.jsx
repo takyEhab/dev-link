@@ -9,52 +9,20 @@ import {
   Linkedin,
   AlertCircle,
   CheckCircle,
+  ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { UserContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
-// Simple UI Components
-const Button = ({
-  children,
-  variant = "default",
-  size = "default",
-  className = "",
-  ...props
-}) => {
-  const baseClasses =
-    "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
-
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline:
-      "border border-gray-600 bg-transparent text-white hover:bg-gray-700",
-    ghost: "text-gray-300 hover:bg-gray-700 hover:text-white",
-    secondary: "bg-gray-600 text-white hover:bg-gray-500",
-  };
-
-  const sizes = {
-    default: "h-10 px-4 py-2",
-    lg: "h-12 px-6 py-3 text-base",
-  };
-
-  return (
-    <button
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
 const Input = ({ className = "", error = false, ...props }) => (
   <input
-    className={`flex h-10 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors ${
+    className={`flex h-10 w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none ${
       error
-        ? "border-red-500 bg-red-900/20 text-red-100 placeholder:text-red-300 focus:ring-red-500 focus:border-red-400"
-        : "border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-400"
+        ? "border-red-500/80 bg-red-950/20 text-red-100 placeholder:text-red-400/50 focus:border-red-500"
+        : "border-zinc-800 bg-zinc-900/90 text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50"
     } ${className}`}
     {...props}
   />
@@ -62,10 +30,10 @@ const Input = ({ className = "", error = false, ...props }) => (
 
 const Textarea = ({ className = "", error = false, ...props }) => (
   <textarea
-    className={`flex min-h-[80px] w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors resize-none ${
+    className={`flex min-h-[80px] w-full rounded-lg border px-3 py-2 text-sm transition-colors resize-none focus:outline-none ${
       error
-        ? "border-red-500 bg-red-900/20 text-red-100 placeholder:text-red-300 focus:ring-red-500 focus:border-red-400"
-        : "border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:ring-blue-500 focus:border-blue-400"
+        ? "border-red-500/80 bg-red-950/20 text-red-100 placeholder:text-red-400/50 focus:border-red-500"
+        : "border-zinc-800 bg-zinc-900/90 text-zinc-100 placeholder:text-zinc-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50"
     } ${className}`}
     {...props}
   />
@@ -73,48 +41,28 @@ const Textarea = ({ className = "", error = false, ...props }) => (
 
 const Label = ({ children, className = "", ...props }) => (
   <label
-    className={`text-sm font-medium text-gray-300 ${className}`}
+    className={`block text-xs font-medium text-zinc-300 mb-1.5 ${className}`}
     {...props}
   >
     {children}
   </label>
 );
 
-const Checkbox = ({ className = "", ...props }) => (
-  <input
-    type="checkbox"
-    className={`h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 ${className}`}
-    {...props}
-  />
-);
-
-// Error Alert Component
 const ErrorAlert = ({ message, className = "" }) => (
   <div
-    className={`flex items-center space-x-2 p-3 bg-red-900/30 border border-red-700/50 rounded-lg text-red-300 ${className}`}
+    className={`flex items-start space-x-2.5 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs ${className}`}
   >
-    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-    <span className="text-sm">{message}</span>
+    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+    <span>{message}</span>
   </div>
 );
 
-// Success Alert Component
-const SuccessAlert = ({ message, className = "" }) => (
-  <div
-    className={`flex items-center space-x-2 p-3 bg-green-900/30 border border-green-700/50 rounded-lg text-green-300 ${className}`}
-  >
-    <CheckCircle className="w-4 h-4 flex-shrink-0" />
-    <span className="text-sm">{message}</span>
-  </div>
-);
-
-// Field Error Component
 const FieldError = ({ error }) => {
   if (!error) return null;
   return (
-    <div className="flex items-center space-x-1 mt-1">
-      <AlertCircle className="w-3 h-3 text-red-400 flex-shrink-0" />
-      <span className="text-xs text-red-400">{error}</span>
+    <div className="flex items-center space-x-1 mt-1 text-red-400 text-xs">
+      <AlertCircle className="w-3 h-3 shrink-0" />
+      <span>{error}</span>
     </div>
   );
 };
@@ -167,13 +115,13 @@ const Login = ({ onSwitchToSignup }) => {
     try {
       const res = await apiLogin(formData.email, formData.password);
       if (res.success) {
-        toast.success(res.message);
+        toast.success(res.message || "Logged in successfully!");
         navigate("/");
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.error ||
-        "Something went wrong. Please try again.";
+        "Something went wrong. Please check your credentials.";
       setGeneralError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -188,58 +136,59 @@ const Login = ({ onSwitchToSignup }) => {
       [name]: value,
     }));
 
-    // Clear field error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
       }));
     }
-
-    // Clear general error
     if (generalError) {
       setGeneralError("");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background ambient lighting */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-blue-400" />
+            <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <User className="w-6 h-6 text-indigo-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-            <p className="text-gray-400 mt-2">
-              Sign in to your developer account
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Welcome Back
+            </h1>
+            <p className="text-xs text-zinc-400 mt-1.5">
+              Sign in to manage your projects and profile
             </p>
           </div>
 
-          {/* Alerts */}
           {generalError && (
             <ErrorAlert message={generalError} className="mb-6" />
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
-              <div className="mt-1 relative">
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
                 <Mail
-                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                    errors.email ? "text-red-400" : "text-gray-400"
+                  className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                    errors.email ? "text-red-400" : "text-zinc-500"
                   }`}
                 />
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="name@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-9"
                   error={!!errors.email}
                   disabled={isLoading}
                 />
@@ -249,10 +198,10 @@ const Login = ({ onSwitchToSignup }) => {
 
             <div>
               <Label htmlFor="password">Password</Label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <Lock
-                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                    errors.password ? "text-red-400" : "text-gray-400"
+                  className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                    errors.password ? "text-red-400" : "text-zinc-500"
                   }`}
                 />
                 <Input
@@ -262,14 +211,14 @@ const Login = ({ onSwitchToSignup }) => {
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10 pr-10"
+                  className="pl-9 pr-9"
                   error={!!errors.password}
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                   disabled={isLoading}
                 >
                   {showPassword ? (
@@ -282,34 +231,31 @@ const Login = ({ onSwitchToSignup }) => {
               <FieldError error={errors.password} />
             </div>
 
-            <Button
+            <button
               type="submit"
-              className="w-full"
-              size="lg"
               disabled={isLoading}
+              className="w-full h-10 mt-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
             >
               {isLoading ? "Signing In..." : "Sign In"}
-            </Button>
+            </button>
           </form>
 
           {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Don't have an account?{" "}
-              <button
-                onClick={onSwitchToSignup}
-                className="text-blue-400 hover:text-blue-300 font-medium"
-                disabled={isLoading}
-              >
-                Sign up
-              </button>
-            </p>
+          <div className="mt-6 text-center text-xs text-zinc-400">
+            Don't have an account?{" "}
+            <button
+              onClick={onSwitchToSignup}
+              className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+              disabled={isLoading}
+            >
+              Create account
+            </button>
           </div>
 
           <div className="mt-4 text-center">
             <button
               onClick={() => navigate("/")}
-              className="text-gray-500 hover:text-gray-400 text-sm"
+              className="text-zinc-500 hover:text-zinc-400 text-xs transition-colors"
               disabled={isLoading}
             >
               ← Back to Home
@@ -330,21 +276,19 @@ const Signup = ({ onSwitchToLogin }) => {
   const [generalError, setGeneralError] = useState("");
   const [registeredUser, setRegisteredUser] = useState(null);
   const [formData, setFormData] = useState({
-    // Step 1: Basic Info
     name: "",
     email: "",
     password: "",
-
-    // Step 2: Optional Profile Info
-    title: "Frontend dev",
-    location: "Cairo, Egypt",
-    primarySkills: "HTML, CSS",
-    bio: "Frontend Developer | JavaScript Enthusiast",
-    education: "Business , Alexandria University",
-    portfolio: "https://myprotfolio.com",
-    github: "https://github.com/takyEhab",
-    linkedIn: "https://www.linkedin.com/in/taky-gad",
+    title: "",
+    location: "",
+    primarySkills: "",
+    bio: "",
+    education: "",
+    portfolio: "",
+    github: "",
+    linkedin: "",
   });
+
   const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
 
@@ -352,7 +296,7 @@ const Signup = ({ onSwitchToLogin }) => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Username is required";
+      newErrors.name = "Full name or username is required";
     } else if (formData.name.trim().length < 2) {
       newErrors.name = "Name must be at least 2 characters";
     }
@@ -374,35 +318,23 @@ const Signup = ({ onSwitchToLogin }) => {
   const validateStep2 = () => {
     const newErrors = {};
 
-    if (!formData.title) {
+    if (!formData.title?.trim()) {
       newErrors.title = "Professional title is required";
     }
-    if (!formData.location) {
+    if (!formData.location?.trim()) {
       newErrors.location = "Location is required";
     }
 
-    if (!formData.primarySkills) {
-      newErrors.primarySkills = "Primary skills is required";
+    if (!formData.primarySkills?.trim()) {
+      newErrors.primarySkills = "At least one skill is required";
     }
 
-    if (!formData.bio) {
-      newErrors.bio = "Professional Bio is required";
+    if (!formData.bio?.trim()) {
+      newErrors.bio = "Professional bio is required";
     }
 
     if (formData.portfolio && !/^https?:\/\/.+/.test(formData.portfolio)) {
-      newErrors.portfolio =
-        "Please enter a valid URL (starting with http:// or https://)";
-    }
-
-    if (
-      formData.primarySkills &&
-      formData.primarySkills.split(",").length > 10
-    ) {
-      newErrors.primarySkills = "Please limit to 10 skills maximum";
-    }
-
-    if (formData.bio && formData.bio.length > 500) {
-      newErrors.bio = "Bio must be 500 characters or less";
+      newErrors.portfolio = "Please enter a valid URL (https://...)";
     }
 
     return newErrors;
@@ -424,21 +356,23 @@ const Signup = ({ onSwitchToLogin }) => {
 
       try {
         const res = await api.post("/users/register/", {
-          email: formData.email,
-          name: formData.name,
+          email: formData.email.trim(),
+          name: formData.name.trim(),
           password: formData.password,
         });
-        if (res.data.success) {
+
+        if (res.data?.success) {
           if (res.data.data?.token) {
             localStorage.setItem("devlink_token", res.data.data.token);
           }
-          setRegisteredUser(res.data.data.user);
-          toast.success(res.data.message);
+          const userObj = res.data.data.user;
+          setRegisteredUser(userObj);
+          toast.success(res.data.message || "Account created!");
+          setCurrentStep(2);
+        } else {
+          setGeneralError(res.data?.error || "Registration failed");
         }
-        setCurrentStep(2);
       } catch (error) {
-        console.log(error.response);
-
         setGeneralError(
           error.response?.data?.error ||
             "Something went wrong. Please try again.",
@@ -447,7 +381,7 @@ const Signup = ({ onSwitchToLogin }) => {
         setIsLoading(false);
       }
     } else {
-      // Step 2 - edit account
+      // Step 2: Profile info
       const validationErrors = validateStep2();
       if (Object.keys(validationErrors).length > 0) {
         setErrors(validationErrors);
@@ -457,38 +391,41 @@ const Signup = ({ onSwitchToLogin }) => {
       setIsLoading(true);
 
       try {
-        // // Simulate account creation
-        // await new Promise((resolve) => setTimeout(resolve, 1500));
+        const skillsArray = formData.primarySkills
+          ? formData.primarySkills
+              .split(",")
+              .map((skill) => skill.trim())
+              .filter(Boolean)
+          : ["JavaScript"];
 
         const userData = {
-          title: formData.title || "Developer",
-          location: formData.location || "Remote",
-          bio:
-            formData.bio ||
-            "New to the platform and excited to work on amazing projects!",
-          education: formData.education,
-          skills: formData.primarySkills
-            ? formData.primarySkills
-                .split(",")
-                .map((skill) => skill.trim())
-                .filter(Boolean)
-            : ["JavaScript", "React", "CSS"],
-          portfolio: formData.portfolio,
-          github: formData.github,
-          linkedIn: formData.linkedIn,
+          title: formData.title.trim(),
+          location: formData.location.trim(),
+          bio: formData.bio.trim(),
+          education: formData.education?.trim() || null,
+          skills: skillsArray,
+          portfolio: formData.portfolio?.trim() || null,
+          github: formData.github?.trim() || null,
+          linkedin: formData.linkedin?.trim() || null,
         };
 
-        let res = await api.post("/profile/", userData);
-        res = res.data;
-        if (res.success) {
-          setUser(registeredUser);
-          toast.success(res.message);
+        const res = await api.post("/profile/", userData);
+        if (res.data?.success) {
+          const profile = res.data.data?.profile;
+          setUser({
+            ...registeredUser,
+            title: profile?.title || userData.title,
+            location: profile?.location || userData.location,
+            bio: profile?.bio || userData.bio,
+            avatar: profile?.avatar || registeredUser?.avatar || null,
+          });
+          toast.success("Profile setup complete!");
           navigate("/");
         }
       } catch (error) {
         const errorMessage =
           error.response?.data?.error ||
-          "Failed to add account info. Please try again.";
+          "Failed to complete profile. You can finish it later from your profile.";
         setGeneralError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -496,30 +433,26 @@ const Signup = ({ onSwitchToLogin }) => {
       }
     }
   };
-  // `/developer/${formData.name ? formData.name : "taky"}`
 
-  const handleSkip = async () => {
+  const handleSkip = () => {
     setUser(registeredUser);
-    toast.success("You are now logged in.");
+    toast.success("You are now signed in.");
     navigate("/");
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
 
-    // Clear field error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
       }));
     }
-
-    // Clear general error
     if (generalError) setGeneralError("");
   };
 
@@ -527,86 +460,56 @@ const Signup = ({ onSwitchToLogin }) => {
     if (currentStep === 1) {
       navigate("/");
     } else {
-      setCurrentStep(1);
-      setErrors({});
-      setGeneralError("");
+      handleSkip();
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background ambient lighting */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="w-full max-w-lg relative z-10">
+        <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-blue-400" />
+            <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-6 h-6 text-indigo-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white">
-              {currentStep === 1 ? "Join DevLink" : "Complete Your Profile"}
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              {currentStep === 1 ? "Create an Account" : "Complete Your Profile"}
             </h1>
-            <p className="text-gray-400 mt-2">
+            <p className="text-xs text-zinc-400 mt-1.5">
               {currentStep === 1
-                ? "Create your developer account"
-                : "Add more details to stand out (optional)"}
+                ? "Join DevLink to connect with developers worldwide"
+                : "Help other developers and recruiters learn about your skills"}
             </p>
-
-            {/* Progress Indicator */}
-            <div className="flex justify-center mt-4">
-              <div className="flex items-center space-x-2">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
-                    currentStep >= 1
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-600 text-gray-400"
-                  }`}
-                >
-                  1
-                </div>
-                <div
-                  className={`w-8 h-1 ${
-                    currentStep >= 2 ? "bg-blue-600" : "bg-gray-600"
-                  }`}
-                ></div>
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${
-                    currentStep >= 2
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-600 text-gray-400"
-                  }`}
-                >
-                  2
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Alerts */}
           {generalError && (
             <ErrorAlert message={generalError} className="mb-6" />
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {currentStep === 1 && (
               <>
-                {/* Basic Information */}
                 <div>
-                  <Label htmlFor="name">Username *</Label>
-                  <div className="mt-1 relative">
+                  <Label htmlFor="name">Full Name or Username *</Label>
+                  <div className="relative">
                     <User
-                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                        errors.name ? "text-red-400" : "text-gray-400"
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                        errors.name ? "text-red-400" : "text-zinc-500"
                       }`}
                     />
                     <Input
                       id="name"
                       name="name"
                       type="text"
-                      placeholder="Enter your username"
+                      placeholder="Alex Developer"
                       value={formData.name}
                       onChange={handleChange}
-                      className="pl-10"
+                      className="pl-9"
                       error={!!errors.name}
                       disabled={isLoading}
                     />
@@ -615,21 +518,21 @@ const Signup = ({ onSwitchToLogin }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <div className="mt-1 relative">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <div className="relative">
                     <Mail
-                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                        errors.email ? "text-red-400" : "text-gray-400"
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                        errors.email ? "text-red-400" : "text-zinc-500"
                       }`}
                     />
                     <Input
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="alex@example.com"
                       value={formData.email}
                       onChange={handleChange}
-                      className="pl-10"
+                      className="pl-9"
                       error={!!errors.email}
                       disabled={isLoading}
                     />
@@ -639,27 +542,27 @@ const Signup = ({ onSwitchToLogin }) => {
 
                 <div>
                   <Label htmlFor="password">Password *</Label>
-                  <div className="mt-1 relative">
+                  <div className="relative">
                     <Lock
-                      className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                        errors.password ? "text-red-400" : "text-gray-400"
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${
+                        errors.password ? "text-red-400" : "text-zinc-500"
                       }`}
                     />
                     <Input
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Create a strong password"
+                      placeholder="Minimum 6 characters"
                       value={formData.password}
                       onChange={handleChange}
-                      className="pl-10 pr-10"
+                      className="pl-9 pr-9"
                       error={!!errors.password}
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                       disabled={isLoading}
                     >
                       {showPassword ? (
@@ -670,61 +573,56 @@ const Signup = ({ onSwitchToLogin }) => {
                     </button>
                   </div>
                   <FieldError error={errors.password} />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Must be at least 6 characters
-                  </p>
                 </div>
               </>
             )}
 
             {currentStep === 2 && (
               <>
-                {/* Optional Profile Information */}
-                <div>
-                  <Label htmlFor="title">Professional Title *</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder="e.g., Full Stack Developer"
-                    value={formData.title}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    error={!!errors.title}
-                  />
-                  <FieldError error={errors.title} />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="title">Job Title *</Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      placeholder="e.g. Senior Full Stack Engineer"
+                      value={formData.title}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      error={!!errors.title}
+                    />
+                    <FieldError error={errors.title} />
+                  </div>
 
-                <div>
-                  <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    placeholder="e.g., San Francisco, CA or Remote"
-                    value={formData.location}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    error={!!errors.location}
-                  />
-                  <FieldError error={errors.title} />
+                  <div>
+                    <Label htmlFor="location">Location *</Label>
+                    <Input
+                      id="location"
+                      name="location"
+                      placeholder="e.g. Remote, or City, Country"
+                      value={formData.location}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                      error={!!errors.location}
+                    />
+                    <FieldError error={errors.location} />
+                  </div>
                 </div>
 
                 <div>
                   <Label htmlFor="primarySkills">
-                    Primary Skills (comma-separated) *
+                    Skills (comma-separated) *
                   </Label>
                   <Input
                     id="primarySkills"
                     name="primarySkills"
-                    placeholder="React, Node.js, TypeScript"
+                    placeholder="React, TypeScript, Node.js, GraphQL"
                     value={formData.primarySkills}
                     onChange={handleChange}
                     error={!!errors.primarySkills}
                     disabled={isLoading}
                   />
                   <FieldError error={errors.primarySkills} />
-                  <p className="text-xs text-gray-500 mt-1">
-                    List your strongest technical skills (max 10)
-                  </p>
                 </div>
 
                 <div>
@@ -732,7 +630,7 @@ const Signup = ({ onSwitchToLogin }) => {
                   <Textarea
                     id="bio"
                     name="bio"
-                    placeholder="Tell potential clients about your experience and what makes you unique..."
+                    placeholder="Briefly describe your experience and what projects you're interested in..."
                     value={formData.bio}
                     onChange={handleChange}
                     rows={3}
@@ -740,24 +638,31 @@ const Signup = ({ onSwitchToLogin }) => {
                     disabled={isLoading}
                   />
                   <FieldError error={errors.bio} />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formData.bio.length}/500 characters
-                  </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="education">Education</Label>
-                  <Textarea
-                    id="education"
-                    name="education"
-                    placeholder="e.g. Business, Alexandria University"
-                    value={formData.education}
-                    onChange={handleChange}
-                    rows={3}
-                    error={!!errors.education}
-                    disabled={isLoading}
-                  />
-                  <FieldError error={errors.education} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="github">GitHub Profile / Username</Label>
+                    <Input
+                      id="github"
+                      name="github"
+                      placeholder="https://github.com/username"
+                      value={formData.github}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="linkedin">LinkedIn Profile URL</Label>
+                    <Input
+                      id="linkedin"
+                      name="linkedin"
+                      placeholder="https://linkedin.com/in/username"
+                      value={formData.linkedin}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -766,7 +671,7 @@ const Signup = ({ onSwitchToLogin }) => {
                     id="portfolio"
                     name="portfolio"
                     type="url"
-                    placeholder="https://yourportfolio.com"
+                    placeholder="https://myportfolio.dev"
                     value={formData.portfolio}
                     onChange={handleChange}
                     error={!!errors.portfolio}
@@ -774,97 +679,59 @@ const Signup = ({ onSwitchToLogin }) => {
                   />
                   <FieldError error={errors.portfolio} />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="github">GitHub Username</Label>
-                    <div className="mt-1 relative">
-                      <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="github"
-                        name="github"
-                        placeholder="yourusername"
-                        value={formData.github}
-                        onChange={handleChange}
-                        className="pl-10"
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="linkedin">LinkedIn Profile</Label>
-                    <div className="mt-1 relative">
-                      <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        id="linkedin"
-                        name="linkedin"
-                        placeholder="linkedin.com/in/you"
-                        value={formData.linkedIn}
-                        onChange={handleChange}
-                        className="pl-10"
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                </div>
               </>
             )}
 
             {/* Action Buttons */}
-            <div className="space-y-3">
-              <Button
+            <div className="space-y-2 pt-2">
+              <button
                 type="submit"
-                className="w-full"
-                size="lg"
                 disabled={isLoading}
+                className="w-full h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
               >
                 {isLoading
                   ? currentStep === 1
-                    ? "Validating..."
-                    : "Creating Account..."
+                    ? "Creating Account..."
+                    : "Saving Profile..."
                   : currentStep === 1
                     ? "Continue"
-                    : "Create Developer Account"}
-              </Button>
+                    : "Complete Profile"}
+              </button>
 
               {currentStep === 2 && (
-                <Button
+                <button
                   type="button"
-                  variant="secondary"
-                  className="w-full"
-                  size="lg"
                   onClick={handleSkip}
                   disabled={isLoading}
+                  className="w-full h-9 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-xs font-medium transition-colors"
                 >
-                  {isLoading ? "Creating Account..." : "Skip for now"}
-                </Button>
+                  Skip for now
+                </button>
               )}
             </div>
           </form>
 
           {/* Footer */}
           {currentStep === 1 && (
-            <div className="mt-6 text-center">
-              <p className="text-gray-400">
-                Already have an account?{" "}
-                <button
-                  onClick={onSwitchToLogin}
-                  className="text-blue-400 hover:text-blue-300 font-medium"
-                  disabled={isLoading}
-                >
-                  Sign in
-                </button>
-              </p>
+            <div className="mt-6 text-center text-xs text-zinc-400">
+              Already have an account?{" "}
+              <button
+                onClick={onSwitchToLogin}
+                className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                disabled={isLoading}
+              >
+                Sign in
+              </button>
             </div>
           )}
 
           <div className="mt-4 text-center">
             <button
               onClick={goBack}
-              className="text-gray-500 hover:text-gray-400 text-sm"
+              className="text-zinc-500 hover:text-zinc-400 text-xs transition-colors"
               disabled={isLoading}
             >
-              ← {currentStep === 1 ? "Back to Home" : "Back"}
+              ← {currentStep === 1 ? "Back to Home" : "Skip setup"}
             </button>
           </div>
         </div>
@@ -873,7 +740,7 @@ const Signup = ({ onSwitchToLogin }) => {
   );
 };
 
-// Main Auth Component
+// Main Auth Page
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const { user } = useContext(UserContext);

@@ -8,21 +8,19 @@ import Loading from "./components/Loading";
 export default function Layout() {
   const location = useLocation();
   const hideNavbar = location.pathname === "/auth";
-  // for multiple routes
-  // or ['/login', '/register'].includes()
   const { loading } = useContext(UserContext);
 
   return (
-    <>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
       {!hideNavbar && <Header />}
       {loading ? (
         <Loading />
       ) : (
-        <>
-          <ToastContainer theme="dark" />
+        <main className="flex-1">
+          <ToastContainer theme="dark" position="top-right" autoClose={3000} />
           <Outlet />
-        </>
+        </main>
       )}
-    </>
+    </div>
   );
 }
