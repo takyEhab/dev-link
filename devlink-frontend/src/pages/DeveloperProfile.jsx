@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import {
   MapPin,
   Code,
+  Code2,
   Users,
   MessageCircle,
   Globe,
@@ -1006,14 +1007,14 @@ const DeveloperProfile = () => {
                       className="rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900/80 hover:border-zinc-700/80 transition-all p-5 sm:p-6"
                     >
                       <div className="flex flex-col sm:flex-row gap-5">
-                        <div className="shrink-0 w-full sm:w-48 h-32 rounded-xl overflow-hidden border border-zinc-800">
+                        <div className="shrink-0 w-full sm:w-48 h-32 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900">
                           <ProjectImage
                             src={project.image}
                             alt={project.title}
                             className="w-full h-full object-cover"
-                            fallbackClassName="w-full h-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600"
-                            iconClassName="w-8 h-8"
-                            icon={Code}
+                            fallbackClassName="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-600"
+                            iconClassName="w-10 h-10 text-zinc-600"
+                            icon={Code2}
                           />
                         </div>
 
@@ -1155,14 +1156,14 @@ const DeveloperProfile = () => {
                     className="rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900/80 hover:border-zinc-700/80 transition-all p-5 flex flex-col justify-between"
                   >
                     <div>
-                      <div className="w-full h-44 rounded-xl overflow-hidden border border-zinc-800 mb-4">
+                      <div className="w-full h-44 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900 mb-4">
                         <ProjectImage
                           src={project.image}
                           alt={project.title}
                           className="w-full h-full object-cover"
-                          fallbackClassName="w-full h-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600"
-                          iconClassName="w-8 h-8"
-                          icon={Code}
+                          fallbackClassName="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-600"
+                          iconClassName="w-10 h-10 text-zinc-600"
+                          icon={Code2}
                         />
                       </div>
 

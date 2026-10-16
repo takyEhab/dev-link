@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Image as ImageIcon, UserRound } from "lucide-react";
+import { Code2, UserRound } from "lucide-react";
 
 /**
  * ProjectImage: displays project image or falls back to default styled project placeholder on error / missing src.
@@ -9,8 +9,8 @@ export const ProjectImage = ({
   alt = "Project",
   className = "",
   fallbackClassName = "",
-  iconClassName = "w-8 h-8 text-zinc-500",
-  icon: Icon = ImageIcon,
+  iconClassName = "w-10 h-10 text-zinc-600",
+  icon: Icon = Code2,
 }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -18,12 +18,19 @@ export const ProjectImage = ({
     setHasError(false);
   }, [src]);
 
-  if (!src || hasError) {
+  const isInvalid =
+    !src ||
+    typeof src !== "string" ||
+    !src.trim() ||
+    src.trim() === "null" ||
+    src.trim() === "undefined";
+
+  if (isInvalid || hasError) {
     return (
       <div
         className={
           fallbackClassName ||
-          `${className} bg-zinc-900 border border-zinc-800 flex items-center justify-center`
+          `${className} bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600`
         }
         aria-label={`${alt} placeholder`}
       >
@@ -38,6 +45,7 @@ export const ProjectImage = ({
       alt={alt}
       className={className}
       onError={() => setHasError(true)}
+      loading="lazy"
     />
   );
 };

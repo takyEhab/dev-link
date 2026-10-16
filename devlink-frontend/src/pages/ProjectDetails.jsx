@@ -76,7 +76,7 @@ const ProjectDetails = () => {
                 src={project.image}
                 alt={project.title}
                 className="w-full h-full object-cover"
-                fallbackClassName="w-full h-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"
+                fallbackClassName="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-600"
                 iconClassName="w-16 h-16 text-zinc-600"
                 icon={Code2}
               />

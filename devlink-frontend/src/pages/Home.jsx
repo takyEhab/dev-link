@@ -1,6 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import {
   Code,
+  Code2,
   Search,
   TrendingUp,
   Award,
@@ -248,13 +249,14 @@ const Home = () => {
                 >
                   <div className="flex flex-col sm:flex-row gap-6">
                     {/* Project Image */}
-                    <div className="relative shrink-0 w-full sm:w-56 h-40 sm:h-36 rounded-xl overflow-hidden border border-zinc-800">
+                    <div className="relative shrink-0 w-full sm:w-56 h-40 sm:h-36 rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900">
                       <ProjectImage
                         src={project.image}
                         alt={project.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        fallbackClassName="w-full h-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"
-                        iconClassName="w-8 h-8 text-zinc-600"
+                        fallbackClassName="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-600"
+                        iconClassName="w-10 h-10 text-zinc-600"
+                        icon={Code2}
                       />
                       {project.featured && (
                         <div className="absolute top-2 left-2">
