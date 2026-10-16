@@ -9,6 +9,13 @@ export const UserProvider = ({ children }) => {
   // Check auth when app loads
   useEffect(() => {
     const loadUser = async () => {
+      const token = localStorage.getItem("devlink_token");
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await checkAuth();
         setUser(data.user);

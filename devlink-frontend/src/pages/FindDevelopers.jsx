@@ -31,6 +31,7 @@ import {
   Target,
   Briefcase,
   UserRound,
+  Loader2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -600,8 +601,17 @@ const TalentDiscovery = () => {
                 />
                 <div className="absolute right-5 top-1/2 transform -translate-y-1/2">
                   <Badge variant="glow" className="text-xs">
-                    <Target className="w-3 h-3 mr-1" />
-                    {filteredTalent.length} talent profiles
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Target className="w-3 h-3 mr-1" />
+                        {filteredTalent.length} talent profiles
+                      </>
+                    )}
                   </Badge>
                 </div>
               </div>
@@ -722,9 +732,32 @@ const TalentDiscovery = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-10">
             {loading ? (
-              <p className="text-center text-slate-400 py-20">
-                Loading developers...
-              </p>
+              <div className="contents">
+                {[1, 2, 3, 4].map((n) => (
+                  <div
+                    key={n}
+                    className="rounded-2xl border bg-slate-800/40 border-slate-700/40 p-8 space-y-6 animate-pulse"
+                  >
+                    <div className="flex items-start gap-6">
+                      <div className="w-24 h-24 rounded-2xl bg-slate-700/50 shrink-0" />
+                      <div className="flex-1 space-y-3">
+                        <div className="h-7 bg-slate-700/50 rounded-lg w-1/2" />
+                        <div className="h-4 bg-slate-700/40 rounded w-1/3" />
+                        <div className="h-4 bg-slate-700/30 rounded w-1/4" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-slate-700/30 rounded w-full" />
+                      <div className="h-4 bg-slate-700/30 rounded w-4/5" />
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-6 w-16 bg-slate-700/40 rounded-full" />
+                      <div className="h-6 w-16 bg-slate-700/40 rounded-full" />
+                      <div className="h-6 w-16 bg-slate-700/40 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               sortedTalent.map((talent, index) => (
                 <Card
@@ -1015,7 +1048,7 @@ const TalentDiscovery = () => {
           </div>
 
           {/* Enhanced No Results */}
-          {sortedTalent.length === 0 && (
+          {!loading && sortedTalent.length === 0 && (
             <div className="text-center py-20">
               <div className="bg-slate-800/60 rounded-3xl p-16 border border-slate-700/50 backdrop-blur-sm">
                 <Users className="w-20 h-20 mx-auto mb-8 text-slate-400 opacity-50" />

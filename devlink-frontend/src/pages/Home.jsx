@@ -23,6 +23,7 @@ import {
   Palette,
   Database,
   Smartphone,
+  Loader2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -343,8 +344,17 @@ const Home = () => {
                 />
                 <div className="absolute right-5 top-1/2 transform -translate-y-1/2">
                   <Badge variant="glow" className="text-xs">
-                    <Target className="w-3 h-3 mr-1" />
-                    {filteredProjects.length} projects
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <Target className="w-3 h-3 mr-1" />
+                        {filteredProjects.length} projects
+                      </>
+                    )}
                   </Badge>
                 </div>
               </div>
@@ -377,13 +387,50 @@ const Home = () => {
         <div className="max-w-6xl mx-auto px-6">
           <div className="space-y-10">
             {loading ? (
-              <p className="text-center text-zinc-400 py-20">
-                Loading projects...
-              </p>
+              <div className="space-y-8 animate-pulse">
+                {[1, 2, 3].map((n) => (
+                  <div
+                    key={n}
+                    className="rounded-2xl border bg-zinc-800/40 border-zinc-700/40 p-8 flex flex-col md:flex-row gap-8"
+                  >
+                    <div className="w-full md:w-48 h-32 rounded-2xl bg-zinc-700/50 shrink-0" />
+                    <div className="flex-1 space-y-4">
+                      <div className="h-7 bg-zinc-700/50 rounded-lg w-1/3" />
+                      <div className="h-4 bg-zinc-700/40 rounded w-1/4" />
+                      <div className="h-4 bg-zinc-700/30 rounded w-full" />
+                      <div className="h-4 bg-zinc-700/30 rounded w-2/3" />
+                      <div className="flex gap-2 pt-2">
+                        <div className="h-6 w-16 bg-zinc-700/40 rounded-full" />
+                        <div className="h-6 w-16 bg-zinc-700/40 rounded-full" />
+                        <div className="h-6 w-16 bg-zinc-700/40 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredProjects.length === 0 ? (
-              <p className="text-center text-zinc-400 py-20">
-                No projects found.
-              </p>
+              <div className="text-center py-20">
+                <div className="bg-zinc-800/60 rounded-3xl p-16 border border-zinc-700/50 backdrop-blur-sm">
+                  <Code className="w-20 h-20 mx-auto mb-8 text-zinc-400 opacity-50" />
+                  <h3 className="text-3xl font-bold text-zinc-200 mb-4">
+                    No projects found
+                  </h3>
+                  <p className="text-zinc-400 mb-8 text-lg">
+                    Try adjusting your search or filters to find what you're
+                    looking for
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedCategory("All");
+                    }}
+                    className="border-zinc-600 hover:bg-zinc-700"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
             ) : (
               filteredProjects.map((project, index) => (
                 <Card
@@ -498,32 +545,6 @@ const Home = () => {
                   </div>
                 </Card>
               ))
-            )}
-
-            {/* Enhanced No Results */}
-            {filteredProjects.length === 0 && (
-              <div className="text-center py-20">
-                <div className="bg-zinc-800/60 rounded-3xl p-16 border border-zinc-700/50 backdrop-blur-sm">
-                  <Code className="w-20 h-20 mx-auto mb-8 text-zinc-400 opacity-50" />
-                  <h3 className="text-3xl font-bold text-zinc-200 mb-4">
-                    No projects found
-                  </h3>
-                  <p className="text-zinc-400 mb-8 text-lg">
-                    Try adjusting your search or filters to find what you're
-                    looking for
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setSelectedCategory("All");
-                    }}
-                    className="border-zinc-600 hover:bg-zinc-700"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
             )}
           </div>
         </div>
