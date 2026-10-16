@@ -22,6 +22,7 @@ import {
   Camera,
   ExternalLink,
   X,
+  Trash2,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
@@ -47,6 +48,21 @@ const DeveloperProfile = () => {
   const [isEditSaving, setIsEditSaving] = useState(false);
   const [isAddProjectSaving, setAddProjectSaving] = useState(false);
   const [isAddProject, setIsAddProject] = useState(false);
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [isEditProjectSaving, setIsEditProjectSaving] = useState(false);
+  const [isDeleteProjectSaving, setIsDeleteProjectSaving] = useState(false);
+  const [editProjectForm, setEditProjectForm] = useState({
+    id: "",
+    title: "",
+    duration: "",
+    description: "",
+    technologies: "",
+    githubLink: "",
+    liveDemo: "",
+    file: null,
+    imageUrl: "",
+    removeImage: false,
+  });
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user, setUser, loading: authLoading } = useContext(UserContext);
@@ -354,6 +370,114 @@ const DeveloperProfile = () => {
       );
     } finally {
       setAddProjectSaving(false);
+    }
+  };
+
+  const handleOpenEditProject = (project) => {
+    setEditProjectForm({
+      id: project.id || project._id,
+      title: project.title || "",
+      duration: project.duration || "",
+      description: project.description || "",
+      technologies: Array.isArray(project.technologies)
+        ? project.technologies.join(", ")
+        : project.technologies || "",
+      githubLink: project.githubLink || project.github_link || "",
+      liveDemo: project.liveDemo || project.live_demo || "",
+      file: null,
+      imageUrl: project.image || "",
+      removeImage: false,
+    });
+    setIsEditProjectOpen(true);
+  };
+
+  const handleUpdateProject = async () => {
+    if (!editProjectForm.title?.trim()) {
+      toast.error("Project title is required.");
+      return;
+    }
+
+    try {
+      setIsEditProjectSaving(true);
+
+      if (
+        !editProjectForm.removeImage &&
+        !editProjectForm.file &&
+        editProjectForm.imageUrl &&
+        editProjectForm.imageUrl.trim()
+      ) {
+        const check = await validateImageUrl(editProjectForm.imageUrl);
+        if (!check.valid) {
+          toast.error(
+            check.error || "The project image URL could not be loaded.",
+          );
+          setIsEditProjectSaving(false);
+          return;
+        }
+      }
+
+      const formData = new FormData();
+      formData.append("title", editProjectForm.title.trim());
+      formData.append("description", (editProjectForm.description || "").trim());
+      formData.append("technologies", editProjectForm.technologies || "");
+      formData.append("duration", (editProjectForm.duration || "").trim());
+      formData.append(
+        "githubLink",
+        (editProjectForm.githubLink || "").trim(),
+      );
+      formData.append("liveDemo", (editProjectForm.liveDemo || "").trim());
+
+      if (editProjectForm.file) {
+        formData.append("image", editProjectForm.file);
+      } else if (editProjectForm.removeImage) {
+        formData.append("removeImage", "true");
+      } else if (editProjectForm.imageUrl?.trim()) {
+        formData.append("imageUrl", editProjectForm.imageUrl.trim());
+      } else {
+        formData.append("removeImage", "true");
+      }
+
+      await api.put(`/projects/${editProjectForm.id}`, formData);
+
+      toast.success("Project updated successfully!");
+      setIsEditProjectOpen(false);
+      await fetchDeveloper();
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error(
+        error.response?.data?.error ||
+          error.message ||
+          "Failed to update project. Please try again.",
+      );
+    } finally {
+      setIsEditProjectSaving(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this project? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setIsDeleteProjectSaving(true);
+      await api.delete(`/projects/${projectId}`);
+      toast.success("Project deleted successfully.");
+      setIsEditProjectOpen(false);
+      await fetchDeveloper();
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error(
+        error.response?.data?.error ||
+          error.message ||
+          "Failed to delete project.",
+      );
+    } finally {
+      setIsDeleteProjectSaving(false);
     }
   };
 
@@ -949,6 +1073,15 @@ const DeveloperProfile = () => {
                                 <Globe className="w-3.5 h-3.5" /> Demo
                               </a>
                             )}
+                            {isOwnProfile && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditProject(project)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-zinc-700/60 bg-zinc-800/70 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-colors ml-auto"
+                              >
+                                <Edit className="w-3 h-3 text-indigo-400" /> Edit
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1086,6 +1219,15 @@ const DeveloperProfile = () => {
                         >
                           <Globe className="w-3.5 h-3.5" /> Demo
                         </a>
+                      )}
+                      {isOwnProfile && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditProject(project)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-zinc-700/60 bg-zinc-800/70 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-colors ml-auto"
+                        >
+                          <Edit className="w-3 h-3 text-indigo-400" /> Edit
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1532,6 +1674,274 @@ const DeveloperProfile = () => {
                 >
                   {isAddProjectSaving ? "Saving..." : "Add Project"}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {isEditProjectOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-white">Edit Project</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Update project details, links, or screenshot.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditProjectOpen(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1">
+                    Project Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editProjectForm.title}
+                    onChange={(e) =>
+                      setEditProjectForm({
+                        ...editProjectForm,
+                        title: e.target.value,
+                      })
+                    }
+                    placeholder="Project Title"
+                    className="w-full px-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1">
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={editProjectForm.duration}
+                    onChange={(e) =>
+                      setEditProjectForm({
+                        ...editProjectForm,
+                        duration: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. 2 months"
+                    className="w-full px-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={editProjectForm.description}
+                  onChange={(e) =>
+                    setEditProjectForm({
+                      ...editProjectForm,
+                      description: e.target.value,
+                    })
+                  }
+                  placeholder="Describe the problem solved, tech stack, and key features..."
+                  className="w-full px-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">
+                  Technologies (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={editProjectForm.technologies}
+                  onChange={(e) =>
+                    setEditProjectForm({
+                      ...editProjectForm,
+                      technologies: e.target.value,
+                    })
+                  }
+                  placeholder="React, Node.js, MongoDB, Tailwind"
+                  className="w-full px-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1">
+                    GitHub Repository
+                  </label>
+                  <input
+                    type="url"
+                    value={editProjectForm.githubLink}
+                    onChange={(e) =>
+                      setEditProjectForm({
+                        ...editProjectForm,
+                        githubLink: e.target.value,
+                      })
+                    }
+                    placeholder="https://github.com/..."
+                    className="w-full px-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1">
+                    Live Demo URL
+                  </label>
+                  <input
+                    type="url"
+                    value={editProjectForm.liveDemo}
+                    onChange={(e) =>
+                      setEditProjectForm({
+                        ...editProjectForm,
+                        liveDemo: e.target.value,
+                      })
+                    }
+                    placeholder="https://demo.devlink.app"
+                    className="w-full px-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Project Image */}
+              <div className="p-3 bg-zinc-950/60 rounded-xl border border-zinc-800 space-y-2">
+                <label className="block text-xs font-medium text-zinc-300">
+                  Project Screenshot / Thumbnail
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-sm transition">
+                    <Upload className="w-3.5 h-3.5" /> Upload New File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const check = validateImageFile(file);
+                          if (!check.valid) {
+                            toast.error(check.error);
+                            e.target.value = "";
+                            return;
+                          }
+                          setEditProjectForm({
+                            ...editProjectForm,
+                            file,
+                            imageUrl: "",
+                            removeImage: false,
+                          });
+                        }
+                      }}
+                    />
+                  </label>
+                  {editProjectForm.file && (
+                    <span className="text-xs text-zinc-400 truncate max-w-xs">
+                      {editProjectForm.file.name}
+                    </span>
+                  )}
+                  {!editProjectForm.removeImage &&
+                  (editProjectForm.file || editProjectForm.imageUrl) ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditProjectForm((prev) => ({
+                          ...prev,
+                          file: null,
+                          imageUrl: "",
+                          removeImage: true,
+                        }))
+                      }
+                      className="px-2 py-1 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
+                    >
+                      Remove Photo
+                    </button>
+                  ) : null}
+                  {editProjectForm.removeImage && (
+                    <span className="text-[11px] text-zinc-500 italic">
+                      Image will be removed
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  placeholder="Or paste an image URL (https://...)"
+                  value={
+                    editProjectForm.removeImage ? "" : editProjectForm.imageUrl
+                  }
+                  onChange={(e) =>
+                    setEditProjectForm({
+                      ...editProjectForm,
+                      imageUrl: e.target.value,
+                      file: null,
+                      removeImage: false,
+                    })
+                  }
+                  className="w-full px-3 py-1.5 text-xs bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+
+                {!editProjectForm.removeImage &&
+                  (editProjectForm.file || editProjectForm.imageUrl) && (
+                    <div className="mt-2 pt-2 border-t border-zinc-800/80">
+                      <span className="text-[11px] text-zinc-400 block mb-1.5">
+                        Preview:
+                      </span>
+                      <div className="w-40 h-24 rounded-lg overflow-hidden border border-zinc-700 bg-zinc-900 flex items-center justify-center">
+                        <img
+                          src={
+                            editProjectForm.file
+                              ? URL.createObjectURL(editProjectForm.file)
+                              : editProjectForm.imageUrl
+                          }
+                          alt="Project preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            toast.error(
+                              "Unable to preview image from URL. Please check the URL.",
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteProject(editProjectForm.id)}
+                  disabled={isDeleteProjectSaving || isEditProjectSaving}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg border border-red-500/20 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {isDeleteProjectSaving ? "Deleting..." : "Delete Project"}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditProjectOpen(false)}
+                    className="px-4 py-2 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-xs font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUpdateProject}
+                    disabled={isEditProjectSaving || isDeleteProjectSaving}
+                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                  >
+                    {isEditProjectSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
