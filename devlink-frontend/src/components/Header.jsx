@@ -28,7 +28,10 @@ const Header = () => {
   const userMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
-  const { user, apiLogout } = useContext(UserContext);
+  const { user, apiLogout, loading } = useContext(UserContext);
+  const hasToken =
+    typeof window !== "undefined" &&
+    Boolean(localStorage.getItem("devlink_token"));
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -194,7 +197,11 @@ const Header = () => {
                 Developers
               </Link>
 
-              {user && (
+              {loading && hasToken ? (
+                <div className="px-3 py-1.5 flex items-center">
+                  <div className="w-16 h-4 rounded-md bg-zinc-900 border border-zinc-800/60 animate-pulse" />
+                </div>
+              ) : user ? (
                 <Link
                   to="/messages"
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -205,13 +212,40 @@ const Header = () => {
                 >
                   Messages
                 </Link>
-              )}
+              ) : null}
             </nav>
           </div>
 
           {/* Right Side */}
           <div className="flex items-center space-x-3">
-            {user ? (
+            {loading ? (
+              hasToken ? (
+                <div
+                  className="flex items-center space-x-3"
+                  aria-label="Loading profile"
+                >
+                  {/* Notification Bell Skeleton */}
+                  <div className="w-9 h-9 rounded-lg bg-zinc-900 border border-zinc-800/80 animate-pulse flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-zinc-800/80" />
+                  </div>
+
+                  {/* Profile Button Skeleton */}
+                  <div className="flex items-center space-x-2.5 p-1.5 rounded-lg border border-transparent animate-pulse">
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/80 shrink-0" />
+                    <div className="hidden sm:flex flex-col space-y-1.5 min-w-[70px]">
+                      <div className="w-16 h-2.5 bg-zinc-800 rounded-full" />
+                      <div className="w-11 h-2 bg-zinc-800/60 rounded-full" />
+                    </div>
+                    <div className="w-3.5 h-3.5 rounded bg-zinc-800/40 hidden sm:block" />
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="w-[74px] h-[34px] rounded-lg bg-zinc-900 border border-zinc-800/80 animate-pulse"
+                  aria-label="Loading action"
+                />
+              )
+            ) : user ? (
               <>
                 {/* Notifications Dropdown */}
                 <div className="relative" ref={notificationRef}>
@@ -401,7 +435,12 @@ const Header = () => {
             >
               <Users className="w-4 h-4" /> Developers
             </Link>
-            {user && (
+            {loading && hasToken ? (
+              <div className="flex items-center gap-3 px-3 py-2 animate-pulse">
+                <div className="w-4 h-4 rounded bg-zinc-800" />
+                <div className="w-20 h-4 rounded bg-zinc-800/60" />
+              </div>
+            ) : user ? (
               <Link
                 to="/messages"
                 onClick={() => setMobileMenuOpen(false)}
@@ -413,8 +452,8 @@ const Header = () => {
               >
                 <MessageSquare className="w-4 h-4" /> Messages
               </Link>
-            )}
-            {!user && (
+            ) : null}
+            {!loading && !user && (
               <div className="pt-2">
                 <Link
                   to="/auth"
@@ -423,6 +462,11 @@ const Header = () => {
                 >
                   Sign In / Register
                 </Link>
+              </div>
+            )}
+            {loading && !hasToken && (
+              <div className="pt-2 px-1">
+                <div className="w-full h-8 rounded-lg bg-zinc-900 border border-zinc-800/80 animate-pulse" />
               </div>
             )}
           </div>

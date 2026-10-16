@@ -13,9 +13,11 @@ export const ProjectImage = ({
   icon: Icon = Code2,
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setHasError(false);
+    setIsLoaded(false);
   }, [src]);
 
   const isInvalid =
@@ -40,13 +42,31 @@ export const ProjectImage = ({
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => setHasError(true)}
-      loading="lazy"
-    />
+    <div className="relative w-full h-full overflow-hidden">
+      {!isLoaded && (
+        <div
+          className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center text-zinc-700 z-0"
+          aria-hidden="true"
+        >
+          <Icon className={iconClassName} />
+        </div>
+      )}
+      <img
+        ref={(img) => {
+          if (img?.complete && !isLoaded) {
+            setIsLoaded(true);
+          }
+        }}
+        src={src}
+        alt={alt}
+        className={`${className} ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        } transition-opacity duration-300`}
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+        loading="lazy"
+      />
+    </div>
   );
 };
 
@@ -61,12 +81,21 @@ export const AvatarImage = ({
   iconClassName = "w-6 h-6 text-zinc-400",
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setHasError(false);
+    setIsLoaded(false);
   }, [src]);
 
-  if (!src || hasError) {
+  const isInvalid =
+    !src ||
+    typeof src !== "string" ||
+    !src.trim() ||
+    src.trim() === "null" ||
+    src.trim() === "undefined";
+
+  if (isInvalid || hasError) {
     return (
       <div
         className={
@@ -81,12 +110,33 @@ export const AvatarImage = ({
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => setHasError(true)}
-    />
+    <div
+      className={`relative overflow-hidden shrink-0 inline-flex items-center justify-center ${className}`}
+    >
+      {!isLoaded && (
+        <div
+          className="absolute inset-0 bg-zinc-800 animate-pulse flex items-center justify-center text-zinc-500"
+          aria-hidden="true"
+        >
+          <UserRound className={iconClassName} />
+        </div>
+      )}
+      <img
+        ref={(img) => {
+          if (img?.complete && !isLoaded) {
+            setIsLoaded(true);
+          }
+        }}
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-cover ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        } transition-opacity duration-200`}
+        onLoad={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+        loading="lazy"
+      />
+    </div>
   );
 };
 
