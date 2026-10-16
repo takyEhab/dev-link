@@ -24,10 +24,12 @@ export const createProject = async (req, res, next) => {
     const { title, description, technologies, githubLink, liveDemo, duration } =
       req.body;
 
-    let imageUrl = null;
-    if (req.file) {
-      imageUrl = req.file.path;
-    }
+    let imageUrl =
+      req.file?.path ||
+      req.file?.secure_url ||
+      req.file?.url ||
+      (typeof req.body.image === "string" ? req.body.image.trim() : null) ||
+      (typeof req.body.imageUrl === "string" ? req.body.imageUrl.trim() : null);
 
     const project = await Project.create({
       userId: req.user.userId,
@@ -40,7 +42,12 @@ export const createProject = async (req, res, next) => {
       image: imageUrl,
     });
 
-    res.status(201).json(project);
+    res.status(201).json({
+      success: true,
+      message: "Project created successfully",
+      data: { project },
+      ...project,
+    });
   } catch (err) {
     next(err);
   }

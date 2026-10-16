@@ -35,6 +35,7 @@ export const getMyProfile = async (req, res, next) => {
 export const createOrUpdateProfile = async (req, res, next) => {
   try {
     const {
+      name,
       title,
       location,
       bio,
@@ -45,6 +46,18 @@ export const createOrUpdateProfile = async (req, res, next) => {
       linkedin,
       avatar,
     } = req.body;
+
+    const uploadedAvatar =
+      req.file?.path ||
+      req.file?.secure_url ||
+      req.file?.url ||
+      (typeof avatar === "string" && avatar.trim() ? avatar.trim() : null);
+
+    // Update user display name if provided
+    if (name && typeof name === "string" && name.trim()) {
+      const User = (await import("../models/user.js")).default;
+      await User.findByIdAndUpdate(req.user.userId, { name: name.trim() });
+    }
 
     // Normalize skills
     let normalizedSkills = [];
@@ -92,6 +105,9 @@ export const createOrUpdateProfile = async (req, res, next) => {
       req.user.userId
     );
 
+    // Retain existing avatar if not explicitly overwritten
+    const finalAvatar = uploadedAvatar || (existingProfile ? existingProfile.avatar : null);
+
     const profileData = {
       user: req.user.userId,
       userId: req.user.userId,
@@ -103,7 +119,7 @@ export const createOrUpdateProfile = async (req, res, next) => {
       github: github?.trim() || null,
       portfolio: portfolio?.trim() || null,
       linkedin: linkedin?.trim() || null,
-      avatar: avatar?.trim() || null,
+      avatar: finalAvatar || null,
     };
 
     // Update existing profile

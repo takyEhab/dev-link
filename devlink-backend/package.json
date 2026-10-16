@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch app.js",
-    "start": "node --env-file-if-exists=.env app.js"
+    "start": "node --env-file-if-exists=.env app.js",
+    "seed": "node --env-file-if-exists=.env database/seed.js"
   },
   "dependencies": {
     "@arcjet/inspect": "^1.0.0-beta.9",

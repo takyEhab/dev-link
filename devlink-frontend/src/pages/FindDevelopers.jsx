@@ -447,7 +447,7 @@ const TalentDiscovery = () => {
           featured: false,
           verified: false,
           premium: false,
-          recentProjects: [],
+          recentProjects: profile.recentProjects || [],
           bio: profile.bio || "This developer has not added a bio yet.",
           github: profile.github || null,
           linkedin: profile.linkedin || null,

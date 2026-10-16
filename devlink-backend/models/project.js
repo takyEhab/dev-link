@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import "./user.js";
 
 const projectSchema = new mongoose.Schema(
   {
@@ -51,11 +52,22 @@ projectSchema.virtual("liveDemo")
   .get(function () { return this.live_demo; })
   .set(function (val) { this.live_demo = val; });
 
+projectSchema.virtual("user_id").get(function () {
+  return (
+    this.user?._id?.toString() ||
+    this.user?.id?.toString() ||
+    (typeof this.user === "string" ? this.user : null)
+  );
+});
+
 projectSchema.set("toJSON", {
   virtuals: true,
   transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    ret.user_id = ret.user?._id?.toString() || ret.user?.toString();
+    ret.id = ret._id?.toString() || ret.id;
+    ret.user_id =
+      ret.user?._id?.toString() ||
+      ret.user?.id?.toString() ||
+      (typeof ret.user === "string" ? ret.user : null);
     ret.githubLink = ret.github_link;
     ret.liveDemo = ret.live_demo;
     delete ret._id;
@@ -67,13 +79,15 @@ projectSchema.set("toJSON", {
 projectSchema.set("toObject", {
   virtuals: true,
   transform: (doc, ret) => {
-    ret.id = ret._id.toString();
-    ret.user_id = ret.user?._id?.toString() || ret.user?.toString();
+    ret.id = ret._id?.toString() || ret.id;
+    ret.user_id =
+      ret.user?._id?.toString() ||
+      ret.user?.id?.toString() ||
+      (typeof ret.user === "string" ? ret.user : null);
     ret.githubLink = ret.github_link;
     ret.liveDemo = ret.live_demo;
     delete ret._id;
     delete ret.__v;
-    return ret;
   },
 });
 
@@ -134,7 +148,7 @@ projectSchema.statics.findByUserId = async function (userId) {
 };
 
 projectSchema.statics.createProject = async function (data) {
-  const doc = await this.create({
+  const doc = new this({
     user: data.userId || data.user,
     title: data.title,
     description: data.description,
@@ -144,6 +158,7 @@ projectSchema.statics.createProject = async function (data) {
     image: data.image,
     duration: data.duration,
   });
+  await doc.save();
   return doc.toObject();
 };
 

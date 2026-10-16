@@ -14,6 +14,7 @@ router.get("/", getAllProjects);
 router.get("/id/:projectId", getProjectById);
 
 router.post("/", authenticate, upload.single("image"), createProject);
+router.get("/user/:userId", getProjectsByUser);
 router.get("/:userId", getProjectsByUser);
 
 export default router;

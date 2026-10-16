@@ -26,6 +26,8 @@ import {
   Plus,
   Info,
   UserRound,
+  Upload,
+  Camera,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
@@ -233,11 +235,16 @@ const DeveloperProfile = () => {
   const { user, loading: authLoading } = useContext(UserContext);
   const [editForm, setEditForm] = useState({});
   const [addForm, setAddForm] = useState({
-    title: "Full stack",
-    duration: "120 Day",
-    description: "Best Project Ever",
-    technologies: "React",
+    title: "",
+    duration: "",
+    description: "",
+    technologies: "",
+    githubLink: "",
+    liveDemo: "",
+    file: null,
+    imageUrl: "",
   });
+  const [developerProjects, setDeveloperProjects] = useState([]);
   const [myDeveloper, setMyDeveloper] = useState(null);
   const [isContacting, setIsContacting] = useState(false);
   const [isSetupSaving, setIsSetupSaving] = useState(false);
@@ -250,6 +257,7 @@ const DeveloperProfile = () => {
     github: "",
     linkedIn: "",
     portfolio: "",
+    avatar: "",
   });
   const currentUserId = user?.id || user?._id;
   const isOwnProfile = Boolean(
@@ -265,18 +273,32 @@ const DeveloperProfile = () => {
   );
   const navigate = useNavigate();
 
-  // Get current user from context
+  // Get current user and developer data from API
   const fetchDeveloper = async () => {
     setLoading(true);
     try {
       const res = await api.get(`/profile/user/${id}`);
       const data = res.data;
-      setMyDeveloper(data.data.profile);
-      const newEditForm = {
-        ...data.data.profile,
-        name: data.data.profile.user.name,
-      };
-      setEditForm(newEditForm);
+      const profile = data?.data?.profile;
+      setMyDeveloper(profile);
+      if (profile) {
+        setEditForm({
+          ...profile,
+          name: profile.user?.name || "",
+          avatar: profile.avatar || "",
+        });
+      }
+
+      // Load real projects from backend
+      try {
+        const projRes = await api.get(`/projects/user/${id}`);
+        const list = Array.isArray(projRes.data)
+          ? projRes.data
+          : projRes.data?.data?.projects || [];
+        setDeveloperProjects(list);
+      } catch (err) {
+        console.warn("Could not load projects for developer", err);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -288,7 +310,12 @@ const DeveloperProfile = () => {
     fetchDeveloper();
   }, [id]);
 
-  let developer = { ...developerData, ...myDeveloper };
+  let developer = {
+    ...developerData,
+    ...myDeveloper,
+    projects: developerProjects.length,
+    recentProjects: developerProjects,
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", icon: Users },
@@ -310,18 +337,14 @@ const DeveloperProfile = () => {
     try {
       setIsEditSaving(true);
 
-      let res = await api.post("/profile/", editForm);
-
-      const data = res.data;
-      console.log({ editForm });
-      console.log({ data: data.data });
+      const res = await api.post("/profile/", editForm);
       toast.success("Profile updated!");
 
-      fetchDeveloper();
+      await fetchDeveloper();
       setIsEditMode(false);
     } catch (error) {
-      toast.error("Failed to save changes.");
-      console.log(error);
+      toast.error(error.response?.data?.error || "Failed to save changes.");
+      console.error(error);
     } finally {
       setIsEditSaving(false);
     }
@@ -411,39 +434,57 @@ const DeveloperProfile = () => {
     }
   };
   const addProject = async () => {
+    if (!addForm.title?.trim()) {
+      toast.error("Project title is required.");
+      return;
+    }
+
     try {
-      setAddProjectSaving(true); // start loading
+      setAddProjectSaving(true);
 
       const formData = new FormData();
-      formData.append("title", addForm.title);
-      formData.append("description", addForm.description);
-      formData.append("technologies", addForm.technologies);
-      formData.append("duration", addForm.duration);
-
-      if (addForm.file) {
-        formData.append("image", addForm.file); // image from state
+      formData.append("title", addForm.title.trim());
+      formData.append("description", (addForm.description || "").trim());
+      formData.append("technologies", addForm.technologies || "");
+      formData.append("duration", (addForm.duration || "").trim());
+      if (addForm.githubLink?.trim()) {
+        formData.append("githubLink", addForm.githubLink.trim());
+      }
+      if (addForm.liveDemo?.trim()) {
+        formData.append("liveDemo", addForm.liveDemo.trim());
       }
 
-      await api.post("/projects", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      if (addForm.file) {
+        formData.append("image", addForm.file);
+      } else if (addForm.imageUrl?.trim()) {
+        formData.append("image", addForm.imageUrl.trim());
+      }
 
-      // success -> close modal + maybe reset form
+      await api.post("/projects", formData);
+
+      toast.success("Project added successfully!");
       setIsAddProject(false);
       setAddForm({
         title: "",
+        duration: "",
         description: "",
         technologies: "",
-        duration: "",
+        githubLink: "",
+        liveDemo: "",
         file: null,
+        imageUrl: "",
       });
+
+      await fetchDeveloper();
     } catch (error) {
       console.error("Error adding project:", error);
-      alert("Failed to add project. Please try again.");
+      toast.error(
+        error.response?.data?.error ||
+          error.message ||
+          "Failed to add project. Please try again."
+      );
     } finally {
-      setAddProjectSaving(false); // stop loading no matter success/fail
+      setAddProjectSaving(false);
     }
   };
 
@@ -470,6 +511,79 @@ const DeveloperProfile = () => {
                 Your account is ready. Add your professional details so other
                 developers can discover you.
               </p>
+            </div>
+
+            {/* Avatar Photo for Setup */}
+            <div className="mb-6 p-4 bg-slate-700/50 rounded-xl border border-slate-600/70 flex flex-col sm:flex-row items-center gap-5">
+              <div className="relative shrink-0">
+                {setupForm.avatar ? (
+                  <img
+                    src={setupForm.avatar}
+                    alt="Avatar preview"
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center">
+                    <UserRound className="w-9 h-9 text-emerald-300/70" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 w-full space-y-2">
+                <label className="block text-sm font-medium text-slate-200">
+                  Profile Avatar Photo (Optional)
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
+                    <Upload className="w-4 h-4" /> Upload Avatar Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            setSetupForm((prev) => ({
+                              ...prev,
+                              avatar: ev.target.result,
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  {setupForm.avatar && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSetupForm((prev) => ({ ...prev, avatar: "" }))
+                      }
+                      className="text-xs text-red-400 hover:text-red-300 underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  placeholder="Or paste an image URL (https://...)"
+                  value={
+                    setupForm.avatar?.startsWith("data:")
+                      ? ""
+                      : setupForm.avatar || ""
+                  }
+                  onChange={(e) =>
+                    setSetupForm((prev) => ({
+                      ...prev,
+                      avatar: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-1.5 text-xs bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -602,20 +716,28 @@ const DeveloperProfile = () => {
         <div className="container mx-auto px-4 -mt-20 relative z-20">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* Avatar */}
-            <div className="relative">
-              
-                        {developer.avatar ? (
-                          <img
-                            src={developer.avatar}
-                            alt={developer.name}
-                            className="w-24 h-24 rounded-2xl border-2 border-slate-600 group-hover:border-emerald-500/50 transition-all duration-500 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="w-32 h-32 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center">
-                            <UserRound className="w-10 h-10 text-emerald-300/70" />
-                          </div>
-                        )}
-
+            <div className="relative group/avatar">
+              {developer.avatar ? (
+                <img
+                  src={developer.avatar}
+                  alt={developer.name}
+                  className="w-28 h-28 md:w-32 md:h-32 rounded-2xl object-cover border-4 border-slate-800 shadow-xl"
+                />
+              ) : (
+                <div className="w-28 h-28 md:w-32 md:h-32 rounded-2xl border-4 border-slate-800 bg-emerald-500/10 flex items-center justify-center shadow-xl">
+                  <UserRound className="w-12 h-12 text-emerald-300/70" />
+                </div>
+              )}
+              {isOwnProfile && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditMode(true)}
+                  title="Change avatar photo"
+                  className="absolute bottom-1 right-1 p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition-transform hover:scale-110"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Profile Info */}
@@ -856,58 +978,100 @@ const DeveloperProfile = () => {
                       Add Project
                     </Button>
                   )}
-                  {developer.recentProjects.map((project) => (
-                    <Card key={project.id} className="p-6">
-                      <div className="flex flex-col lg:flex-row gap-6">
-                        <img
-                          src={
-                            project.image ||
-                            "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop"
-                          }
-                          alt={project.title}
-                          className="w-full lg:w-48 h-32 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.target.src =
-                              "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop";
-                          }}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-xl font-semibold text-white">
-                              {project.title}
-                            </h3>
-                            <Badge
-                              variant={
-                                project.status === "Completed"
-                                  ? "success"
-                                  : "warning"
-                              }
-                            >
-                              {project.status}
-                            </Badge>
-                          </div>
-                          <p className="text-slate-300 mb-4">
-                            {project.description}
-                          </p>
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {project.tech.map((tech) => (
-                              <Badge key={tech} variant="secondary">
-                                {tech}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
-                              <span className="text-slate-400">Duration:</span>
-                              <p className="text-white font-semibold">
-                                {project.duration}
-                              </p>
+                  {developer.recentProjects.length === 0 ? (
+                    <Card className="p-12 text-center">
+                      <FolderOpen className="w-12 h-12 mx-auto mb-4 text-slate-500 opacity-60" />
+                      <h4 className="text-lg font-semibold text-white mb-2">
+                        No projects yet
+                      </h4>
+                      <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
+                        {isOwnProfile
+                          ? "Showcase your work! Add projects with screenshots and links to impress other developers and clients."
+                          : "This developer hasn't published any projects yet."}
+                      </p>
+                      {isOwnProfile && (
+                        <Button onClick={() => setIsAddProject(true)}>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Your First Project
+                        </Button>
+                      )}
+                    </Card>
+                  ) : (
+                    developer.recentProjects.map((project) => (
+                      <Card key={project.id || project._id} className="p-6">
+                        <div className="flex flex-col lg:flex-row gap-6">
+                          {project.image ? (
+                            <img
+                              src={project.image}
+                              alt={project.title}
+                              className="w-full lg:w-56 h-36 object-cover rounded-xl border border-slate-700 bg-slate-800"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full lg:w-56 h-36 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                              <Code className="w-10 h-10 text-emerald-400/50" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-3">
+                              <h3 className="text-xl font-semibold text-white">
+                                {project.title}
+                              </h3>
+                              {project.duration && (
+                                <Badge variant="secondary">
+                                  {project.duration}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-slate-300 mb-4 text-sm leading-relaxed">
+                              {project.description}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {(
+                                project.technologies ||
+                                project.tech ||
+                                []
+                              ).map((tech) => (
+                                <Badge key={tech} variant="outline">
+                                  {tech}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 pt-2">
+                              <Link
+                                to={`/project/${project.id || project._id}`}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 text-xs font-semibold border border-emerald-500/30 transition-colors"
+                              >
+                                View Details
+                              </Link>
+                              {(project.githubLink || project.github_link) && (
+                                <a
+                                  href={project.githubLink || project.github_link}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-600 transition-colors"
+                                >
+                                  <Github className="w-3.5 h-3.5" /> Code
+                                </a>
+                              )}
+                              {(project.liveDemo || project.live_demo) && (
+                                <a
+                                  href={project.liveDemo || project.live_demo}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-600 transition-colors"
+                                >
+                                  <Globe className="w-3.5 h-3.5" /> Demo
+                                </a>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ))
+                  )}
                 </div>
               )}
             </div>
@@ -932,6 +1096,79 @@ const DeveloperProfile = () => {
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Profile Photo / Avatar */}
+              <div className="p-4 bg-slate-700/50 rounded-xl border border-slate-600/70 flex flex-col sm:flex-row items-center gap-5">
+                <div className="relative shrink-0">
+                  {editForm.avatar ? (
+                    <img
+                      src={editForm.avatar}
+                      alt="Avatar preview"
+                      className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-2xl border-2 border-slate-600 bg-emerald-500/10 flex items-center justify-center">
+                      <UserRound className="w-9 h-9 text-emerald-300/70" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 w-full space-y-2">
+                  <label className="block text-sm font-medium text-slate-200">
+                    Profile Avatar Photo
+                  </label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow transition">
+                      <Upload className="w-4 h-4" /> Upload New Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                              setEditForm((prev) => ({
+                                ...prev,
+                                avatar: ev.target.result,
+                              }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    {editForm.avatar && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditForm((prev) => ({ ...prev, avatar: "" }))
+                        }
+                        className="text-xs text-red-400 hover:text-red-300 underline"
+                      >
+                        Remove Photo
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="Or paste an image URL (https://...)"
+                    value={
+                      editForm.avatar?.startsWith("data:")
+                        ? ""
+                        : editForm.avatar || ""
+                    }
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        avatar: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-1.5 text-xs bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -1213,36 +1450,102 @@ const DeveloperProfile = () => {
                 />
               </div>
 
-              {/* Project Image */}
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Project Image
-              </label>
-              <div className="flex flex-col items-start space-y-4">
-                <label className="cursor-pointer bg-emerald-600 text-white px-4 py-2 rounded-lg shadow hover:bg-emerald-700 transition">
-                  Upload Image
+              {/* Project Links */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    GitHub Repository URL
+                  </label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setAddForm({
-                          ...addForm,
-                          file,
-                        });
-                      }
-                    }}
+                    type="url"
+                    value={addForm.githubLink || ""}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, githubLink: e.target.value })
+                    }
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="https://github.com/username/project"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Live Demo URL
+                  </label>
+                  <input
+                    type="url"
+                    value={addForm.liveDemo || ""}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, liveDemo: e.target.value })
+                    }
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    placeholder="https://myproject.demo.com"
+                  />
+                </div>
+              </div>
+
+              {/* Project Image */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-slate-300">
+                  Project Image / Screenshot
                 </label>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow hover:bg-emerald-500 transition">
+                    <Upload className="w-4 h-4" /> Upload Screenshot File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setAddForm({
+                            ...addForm,
+                            file,
+                            imageUrl: "",
+                          });
+                        }
+                      }}
+                    />
+                  </label>
+                  {addForm.file && (
+                    <span className="text-xs text-slate-300 truncate max-w-xs">
+                      {addForm.file.name}
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-xs text-slate-400">
+                  Or paste an image URL:
+                </div>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={addForm.imageUrl || ""}
+                  onChange={(e) =>
+                    setAddForm({
+                      ...addForm,
+                      imageUrl: e.target.value,
+                      file: null,
+                    })
+                  }
+                  className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
 
                 {/* Preview the image */}
-                {addForm.file && (
-                  <img
-                    src={URL.createObjectURL(addForm.file)}
-                    alt="Preview"
-                    className="mt-2 w-40 h-40 object-cover rounded-lg border border-slate-600"
-                  />
+                {(addForm.file || addForm.imageUrl) && (
+                  <div className="mt-3">
+                    <img
+                      src={
+                        addForm.file
+                          ? URL.createObjectURL(addForm.file)
+                          : addForm.imageUrl
+                      }
+                      alt="Preview"
+                      className="w-56 h-36 object-cover rounded-xl border border-slate-600 shadow-md bg-slate-800"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  </div>
                 )}
               </div>
 

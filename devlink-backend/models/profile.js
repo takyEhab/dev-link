@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import "./user.js";
 
 const profileSchema = new mongoose.Schema(
   {
@@ -105,7 +106,19 @@ profileSchema.statics.findAll = async function () {
   return Promise.all(
     profiles.map(async (p) => {
       const count = await Project.countDocuments({ user: p.user?._id || p.user });
-      return formatProfile(p, count);
+      const recent = await Project.find({ user: p.user?._id || p.user })
+        .limit(2)
+        .sort({ created_at: -1 });
+      const formatted = formatProfile(p, count);
+      return {
+        ...formatted,
+        recentProjects: recent.map((pr) => ({
+          id: pr._id.toString(),
+          title: pr.title,
+          image: pr.image,
+          tech: pr.technologies || [],
+        })),
+      };
     })
   );
 };
